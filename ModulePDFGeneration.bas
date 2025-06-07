@@ -4,16 +4,36 @@ Option Explicit
 ' --- CONSTANTES DE CHEMINS RELATIFS ET NOMS DE DOSSIERS ---
 ' Chemin RELATIF depuis la racine OneDrive vers le dossier parent des PDF
 Private Const RELATIVE_PDF_PARENT_PATH As String = "IC.1 Admin & Team\1. Hot Topics\"
-' Noms des dossiers spécifiques pour les PDF (doivent correspondre aux noms DANS OneDrive)
+' Nom de la feuille contenant les parametres utilisateurs
+Private Const SETTINGS_SHEET_NAME As String = "Config"
+' Adresse de la cellule ou specifier le chemin OneDrive de base
+Private Const ONEDRIVE_BASE_PATH_CELL As String = "B2"
+
+
+Function FindUserOneDriveBasePath() As String
+    Dim ws As Worksheet
+    On Error Resume Next
+    Set ws = ThisWorkbook.Worksheets(SETTINGS_SHEET_NAME)
+    On Error GoTo 0
+    If Not ws Is Nothing Then
+        basePath = Trim(CStr(ws.Range(ONEDRIVE_BASE_PATH_CELL).Value))
+        If basePath <> "" Then
+            If Right(basePath, 1) <> "\" Then basePath = basePath & "\"
+            If Dir(basePath, vbDirectory) <> "" Then
+                FindUserOneDriveBasePath = basePath
+                Exit Function
+            End If
+        End If
+    End If
 Private Const PDF_FOLDER_JOUR As String = "HORAIRE PDF TEAM JOUR"
 Private Const PDF_FOLDER_NUIT As String = "HORAIRE PDF TEAM NUIT"
 ' Noms des SOUS-DOSSIERS d'archive DANS les dossiers PDF_FOLDER_JOUR/NUIT
-Private Const ARCHIVE_SUBFOLDER_JOUR As String = "Archive_Jour" ' Nom du sous-dossier d'archive pour l'équipe JOUR
-Private Const ARCHIVE_SUBFOLDER_NUIT As String = "Archive_Nuit" ' Nom du sous-dossier d'archive pour l'équipe NUIT
+Private Const ARCHIVE_SUBFOLDER_JOUR As String = "Archive_Jour" ' Nom du sous-dossier d'archive pour l'Ã©quipe JOUR
+Private Const ARCHIVE_SUBFOLDER_NUIT As String = "Archive_Nuit" ' Nom du sous-dossier d'archive pour l'Ã©quipe NUIT
 
 ' --- CONSTANTE POUR WHATSAPP ---
-' VOTRE numéro international SANS + ou 00
-Private Const MY_WHATSAPP_NUMBER As String = "32495030246" ' Adaptez ce numéro
+' VOTRE numÃ©ro international SANS + ou 00
+Private Const MY_WHATSAPP_NUMBER As String = "32495030246" ' Adaptez ce numÃ©ro
 
 
 ' --- Trouve la base du chemin OneDrive utilisateur valide ---
@@ -36,7 +56,7 @@ Function FindUserOneDriveBasePath() As String
     Next userFolder
 End Function
 
-' --- Nouvelle fonction pour obtenir une date à partir d'un nom de mois (plus robuste) ---
+' --- Nouvelle fonction pour obtenir une date Ã  partir d'un nom de mois (plus robuste) ---
 Function GetMonthDateFromName(monthNameInput As String, Optional yearVal As Integer = 0) As Date
     Dim monthStr As String
     Dim yearStr As String
@@ -48,7 +68,7 @@ Function GetMonthDateFromName(monthNameInput As String, Optional yearVal As Inte
     tempMonthName = Trim(monthNameInput)
     GetMonthDateFromName = CDate(0) ' Default to an invalid date
 
-    ' Check if monthNameInput already contains a year (e.g., "Août 2024")
+    ' Check if monthNameInput already contains a year (e.g., "AoÃ»t 2024")
     parts = Split(tempMonthName, " ")
     If UBound(parts) = 0 Then ' Only one part, must be the month name
         monthStr = tempMonthName
@@ -63,7 +83,7 @@ Function GetMonthDateFromName(monthNameInput As String, Optional yearVal As Inte
             monthStr = tempMonthName ' Re-assign full name if format is not "Month YYYY"
             yearStr = ""
         End If
-    Else ' More than two parts, e.g. "Janvier de l'année 2024" - treat as just month name for now
+    Else ' More than two parts, e.g. "Janvier de l'annÃ©e 2024" - treat as just month name for now
          monthStr = tempMonthName ' Re-assign full name
          yearStr = ""
     End If
@@ -72,7 +92,7 @@ Function GetMonthDateFromName(monthNameInput As String, Optional yearVal As Inte
     Select Case LCase(monthStr)
         Case "janvier", "janv"
             m = 1
-        Case "février", "fevrier", "févr", "fevr"
+        Case "fÃ©vrier", "fevrier", "fÃ©vr", "fevr"
             m = 2
         Case "mars"
             m = 3
@@ -84,7 +104,7 @@ Function GetMonthDateFromName(monthNameInput As String, Optional yearVal As Inte
             m = 6
         Case "juillet", "juil"
             m = 7
-        Case "août", "aout", "aoû", "aou" ' Handle "Aout" specifically
+        Case "aoÃ»t", "aout", "aoÃ»", "aou" ' Handle "Aout" specifically
             m = 8
         Case "septembre", "sept"
             m = 9
@@ -92,7 +112,7 @@ Function GetMonthDateFromName(monthNameInput As String, Optional yearVal As Inte
             m = 10
         Case "novembre", "nov"
             m = 11
-        Case "décembre", "decembre", "déc", "dec"
+        Case "dÃ©cembre", "decembre", "dÃ©c", "dec"
             m = 12
         Case Else
             ' Try to parse with DateValue as a last resort for this part if not in custom list
@@ -136,7 +156,7 @@ Function GetMonthDateFromName(monthNameInput As String, Optional yearVal As Inte
     GetMonthDateFromName = DateSerial(y, m, 1)
 End Function
 
-' --- Archive les PDF du mois précédent dans leurs sous-dossiers d'archive respectifs ---
+' --- Archive les PDF du mois prÃ©cÃ©dent dans leurs sous-dossiers d'archive respectifs ---
 Sub ArchivePreviousMonthPDFs()
     Dim datePreviousMonth As Date
     Dim previousMonthName As String
@@ -149,16 +169,16 @@ Sub ArchivePreviousMonthPDFs()
 
     On Error GoTo ArchiveErrorHandler
 
-    ' 1. Calculer le nom du mois précédent
+    ' 1. Calculer le nom du mois prÃ©cÃ©dent
     datePreviousMonth = DateAdd("m", -1, Date)
     previousMonthName = Format(datePreviousMonth, "mmmm") ' vbUseSystemDayOfWeek is not needed for "mmmm"
     previousMonthName = UCase(Left(previousMonthName, 1)) & Mid(previousMonthName, 2)
-    Debug.Print "Archivage: Recherche des fichiers du mois précédent à archiver : " & previousMonthName
+    Debug.Print "Archivage: Recherche des fichiers du mois prÃ©cÃ©dent Ã  archiver : " & previousMonthName
 
     ' 2. Construire les chemins
     baseOneDrivePath = FindUserOneDriveBasePath()
     If baseOneDrivePath = "" Then
-        Debug.Print "Archivage ignoré: Chemin OneDrive de base non trouvé."
+        Debug.Print "Archivage ignorÃ©: Chemin OneDrive de base non trouvÃ©."
         Exit Sub
     End If
 
@@ -177,40 +197,40 @@ Sub ArchivePreviousMonthPDFs()
     destinationFileJour = archiveFolderPathJour & "Horaire_" & previousMonthName & "_Jour.pdf"
     destinationFileNuit = archiveFolderPathNuit & "Horaire_" & previousMonthName & "_Nuit.pdf"
 
-    ' 3. Créer les dossiers d'archive s'ils n'existent pas
-    On Error Resume Next ' Ignorer l'erreur si le dossier existe déjà
+    ' 3. CrÃ©er les dossiers d'archive s'ils n'existent pas
+    On Error Resume Next ' Ignorer l'erreur si le dossier existe dÃ©jÃ 
     If Dir(archiveFolderPathJour, vbDirectory) = "" Then
         MkDir archiveFolderPathJour
-        Debug.Print "Archivage: Dossier '" & archiveFolderPathJour & "' créé."
+        Debug.Print "Archivage: Dossier '" & archiveFolderPathJour & "' crÃ©Ã©."
     End If
     If Dir(archiveFolderPathNuit, vbDirectory) = "" Then
         MkDir archiveFolderPathNuit
-        Debug.Print "Archivage: Dossier '" & archiveFolderPathNuit & "' créé."
+        Debug.Print "Archivage: Dossier '" & archiveFolderPathNuit & "' crÃ©Ã©."
     End If
-    On Error GoTo ArchiveErrorHandler ' Rétablir la gestion d'erreur normale
+    On Error GoTo ArchiveErrorHandler ' RÃ©tablir la gestion d'erreur normale
 
-    ' 4. Déplacer les fichiers s'ils existent (Source -> Archive)
+    ' 4. DÃ©placer les fichiers s'ils existent (Source -> Archive)
     On Error Resume Next ' Ignorer l'erreur si le fichier source n'existe pas
 
     If Dir(sourceFileJour) <> "" Then
-        Name sourceFileJour As destinationFileJour ' Déplace le fichier
-        Debug.Print "Archivage : Déplacé " & sourceFileJour & " vers " & destinationFileJour
+        Name sourceFileJour As destinationFileJour ' DÃ©place le fichier
+        Debug.Print "Archivage : DÃ©placÃ© " & sourceFileJour & " vers " & destinationFileJour
     Else
-        Debug.Print "Archivage : Fichier Jour du mois précédent non trouvé dans le dossier principal : " & sourceFileJour
+        Debug.Print "Archivage : Fichier Jour du mois prÃ©cÃ©dent non trouvÃ© dans le dossier principal : " & sourceFileJour
     End If
 
     If Dir(sourceFileNuit) <> "" Then
-        Name sourceFileNuit As destinationFileNuit ' Déplace le fichier
-        Debug.Print "Archivage : Déplacé " & sourceFileNuit & " vers " & destinationFileNuit
+        Name sourceFileNuit As destinationFileNuit ' DÃ©place le fichier
+        Debug.Print "Archivage : DÃ©placÃ© " & sourceFileNuit & " vers " & destinationFileNuit
     Else
-        Debug.Print "Archivage : Fichier Nuit du mois précédent non trouvé dans le dossier principal : " & sourceFileNuit
+        Debug.Print "Archivage : Fichier Nuit du mois prÃ©cÃ©dent non trouvÃ© dans le dossier principal : " & sourceFileNuit
     End If
 
-    On Error GoTo 0 ' Rétablir la gestion d'erreur par défaut
+    On Error GoTo 0 ' RÃ©tablir la gestion d'erreur par dÃ©faut
     Exit Sub
 
 ArchiveErrorHandler:
-    MsgBox "Une erreur est survenue lors de l'archivage des PDF du mois précédent : " & Err.Description, vbExclamation
+    MsgBox "Une erreur est survenue lors de l'archivage des PDF du mois prÃ©cÃ©dent : " & Err.Description, vbExclamation
     On Error GoTo 0
 End Sub
 
@@ -227,16 +247,16 @@ Sub CleanupArchivedPDFs()
 
     On Error GoTo CleanupErrorHandler
 
-    ' 1. Calculer le nom du mois à nettoyer (Mois actuel - 3 mois)
+    ' 1. Calculer le nom du mois Ã  nettoyer (Mois actuel - 3 mois)
     dateForCleanupTarget = DateAdd("m", -3, Date)
     monthToCleanupName = Format(dateForCleanupTarget, "mmmm") ' vbUseSystemDayOfWeek is not needed for "mmmm"
     monthToCleanupName = UCase(Left(monthToCleanupName, 1)) & Mid(monthToCleanupName, 2)
     Debug.Print "Nettoyage des archives : Recherche des fichiers (datant de 3 mois) : " & monthToCleanupName
 
-    ' 2. Construire les chemins complets des fichiers potentiels à supprimer DANS LES ARCHIVES
+    ' 2. Construire les chemins complets des fichiers potentiels Ã  supprimer DANS LES ARCHIVES
     baseOneDrivePath = FindUserOneDriveBasePath()
     If baseOneDrivePath = "" Then
-        Debug.Print "Nettoyage des archives ignoré: Chemin OneDrive de base non trouvé."
+        Debug.Print "Nettoyage des archives ignorÃ©: Chemin OneDrive de base non trouvÃ©."
         Exit Sub
     End If
 
@@ -255,41 +275,41 @@ Sub CleanupArchivedPDFs()
     ' 3. Supprimer les fichiers s'ils existent DANS LES ARCHIVES (ignorer erreurs si dossier archive n'existe pas encore)
     On Error Resume Next
 
-    If Dir(archiveFolderPathJour, vbDirectory) <> "" Then ' Vérifie si le dossier archive existe
+    If Dir(archiveFolderPathJour, vbDirectory) <> "" Then ' VÃ©rifie si le dossier archive existe
         If Dir(fileToDeleteJour) <> "" Then
             Kill fileToDeleteJour
-            Debug.Print "Nettoyage des archives : Supprimé " & fileToDeleteJour
+            Debug.Print "Nettoyage des archives : SupprimÃ© " & fileToDeleteJour
         Else
-            Debug.Print "Nettoyage des archives : Fichier Jour (datant de 3 mois) non trouvé dans l'archive : " & fileToDeleteJour
+            Debug.Print "Nettoyage des archives : Fichier Jour (datant de 3 mois) non trouvÃ© dans l'archive : " & fileToDeleteJour
         End If
     Else
-        Debug.Print "Nettoyage des archives : Dossier archive Jour non trouvé: " & archiveFolderPathJour
+        Debug.Print "Nettoyage des archives : Dossier archive Jour non trouvÃ©: " & archiveFolderPathJour
     End If
 
 
-    If Dir(archiveFolderPathNuit, vbDirectory) <> "" Then ' Vérifie si le dossier archive existe
+    If Dir(archiveFolderPathNuit, vbDirectory) <> "" Then ' VÃ©rifie si le dossier archive existe
         If Dir(fileToDeleteNuit) <> "" Then
             Kill fileToDeleteNuit
-            Debug.Print "Nettoyage des archives : Supprimé " & fileToDeleteNuit
+            Debug.Print "Nettoyage des archives : SupprimÃ© " & fileToDeleteNuit
         Else
-            Debug.Print "Nettoyage des archives : Fichier Nuit (datant de 3 mois) non trouvé dans l'archive : " & fileToDeleteNuit
+            Debug.Print "Nettoyage des archives : Fichier Nuit (datant de 3 mois) non trouvÃ© dans l'archive : " & fileToDeleteNuit
         End If
     Else
-        Debug.Print "Nettoyage des archives : Dossier archive Nuit non trouvé: " & archiveFolderPathNuit
+        Debug.Print "Nettoyage des archives : Dossier archive Nuit non trouvÃ©: " & archiveFolderPathNuit
     End If
 
     On Error GoTo 0
     Exit Sub
 
 CleanupErrorHandler:
-    MsgBox "Une erreur est survenue lors du nettoyage des anciens PDF archivés : " & Err.Description, vbExclamation
+    MsgBox "Une erreur est survenue lors du nettoyage des anciens PDF archivÃ©s : " & Err.Description, vbExclamation
     On Error GoTo 0
 End Sub
 
 
 ' --- Subroutine Principale d'Export PDF (MODIFIED) ---
 Sub ExportHorairePDF(ws As Worksheet, equipe As String)
-    Dim pdfTeamFolderPath As String ' Dossier principal de l'équipe (Jour/Nuit)
+    Dim pdfTeamFolderPath As String ' Dossier principal de l'Ã©quipe (Jour/Nuit)
     Dim targetPdfFolderPath As String ' Dossier de destination final (principal ou archive)
     Dim archiveSubFolder As String
     Dim pdfFileName As String
@@ -304,17 +324,17 @@ Sub ExportHorairePDF(ws As Worksheet, equipe As String)
 
     On Error GoTo ErrorHandler_Export
 
-    ' 1. Valider l'équipe
+    ' 1. Valider l'Ã©quipe
     If UCase(equipe) <> "JOUR" And UCase(equipe) <> "NUIT" Then
-        MsgBox "Type d'équipe non valide spécifié ('" & equipe & "').", vbCritical, "Erreur d'Export"
+        MsgBox "Type d'Ã©quipe non valide spÃ©cifiÃ© ('" & equipe & "').", vbCritical, "Erreur d'Export"
         Exit Sub
     End If
 
     ' 2. Obtenir le chemin de base OneDrive utilisateur
     userOneDrivePath = FindUserOneDriveBasePath()
     If userOneDrivePath = "" Then
-        MsgBox "Impossible de trouver un dossier OneDrive valide pour les utilisateurs configurés." & vbCrLf & _
-               "Veuillez vérifier la configuration dans la fonction 'FindUserOneDriveBasePath'.", vbCritical, "Erreur de Chemin Utilisateur"
+        MsgBox "Impossible de trouver un dossier OneDrive valide pour les utilisateurs configurÃ©s." & vbCrLf & _
+               "Veuillez vÃ©rifier la configuration dans la fonction 'FindUserOneDriveBasePath'.", vbCritical, "Erreur de Chemin Utilisateur"
         Exit Sub
     End If
 
@@ -322,18 +342,18 @@ Sub ExportHorairePDF(ws As Worksheet, equipe As String)
     fullParentPath = userOneDrivePath & RELATIVE_PDF_PARENT_PATH
     If Right(fullParentPath, 1) <> "\" Then fullParentPath = fullParentPath & "\"
 
-    ' 4. Obtenir le nom du mois depuis la feuille et déterminer si c'est un mois passé
+    ' 4. Obtenir le nom du mois depuis la feuille et dÃ©terminer si c'est un mois passÃ©
     monthName = ws.Name
     If Trim(monthName) = "" Then
-        MsgBox "Le nom de la feuille (utilisé comme nom de mois) est vide. Veuillez nommer la feuille correctement.", vbCritical, "Erreur Nom de Mois"
+        MsgBox "Le nom de la feuille (utilisÃ© comme nom de mois) est vide. Veuillez nommer la feuille correctement.", vbCritical, "Erreur Nom de Mois"
         Exit Sub
     End If
 
-    ' --- MODIFICATION START: Utiliser GetMonthDateFromName pour interpréter le nom de la feuille ---
+    ' --- MODIFICATION START: Utiliser GetMonthDateFromName pour interprÃ©ter le nom de la feuille ---
     sheetMonthDate = GetMonthDateFromName(monthName)
 
-    If sheetMonthDate = CDate(0) Then ' CDate(0) est retourné par GetMonthDateFromName si le nom n'est pas valide
-        MsgBox "Le nom de la feuille '" & monthName & "' ne peut pas être interprété comme un mois/date valide." & vbCrLf & _
+    If sheetMonthDate = CDate(0) Then ' CDate(0) est retournÃ© par GetMonthDateFromName si le nom n'est pas valide
+        MsgBox "Le nom de la feuille '" & monthName & "' ne peut pas Ãªtre interprÃ©tÃ© comme un mois/date valide." & vbCrLf & _
                "Veuillez utiliser un nom de mois (ex: 'Avril') ou un format reconnaissable (ex: 'Avril 2024').", vbCritical, "Erreur Nom de Mois"
         Exit Sub
     End If
@@ -341,13 +361,13 @@ Sub ExportHorairePDF(ws As Worksheet, equipe As String)
 
     currentMonthStartDate = DateSerial(Year(Date), Month(Date), 1) ' Premier jour du mois en cours
 
-    ' Un mois est "passé" s'il est strictement antérieur au mois en cours.
-    ' Si la feuille est pour le mois en cours, ce n'est PAS "passé" pour cette logique.
+    ' Un mois est "passÃ©" s'il est strictement antÃ©rieur au mois en cours.
+    ' Si la feuille est pour le mois en cours, ce n'est PAS "passÃ©" pour cette logique.
     isPastMonth = (sheetMonthDate < currentMonthStartDate)
 
-    Debug.Print "Export PDF: Feuille '" & monthName & "', Date feuille interprétée: " & Format(sheetMonthDate, "dd-mmm-yyyy") & ", Début mois actuel: " & Format(currentMonthStartDate, "dd-mmm-yyyy") & ", Est un mois passé: " & isPastMonth
+    Debug.Print "Export PDF: Feuille '" & monthName & "', Date feuille interprÃ©tÃ©e: " & Format(sheetMonthDate, "dd-mmm-yyyy") & ", DÃ©but mois actuel: " & Format(currentMonthStartDate, "dd-mmm-yyyy") & ", Est un mois passÃ©: " & isPastMonth
 
-    ' 5. Construire le chemin du dossier PDF SPÉCIFIQUE de l'équipe (Jour ou Nuit)
+    ' 5. Construire le chemin du dossier PDF SPÃ‰CIFIQUE de l'Ã©quipe (Jour ou Nuit)
     If UCase(equipe) = "JOUR" Then
         pdfTeamFolderPath = fullParentPath & PDF_FOLDER_JOUR & "\"
         archiveSubFolder = ARCHIVE_SUBFOLDER_JOUR
@@ -356,32 +376,32 @@ Sub ExportHorairePDF(ws As Worksheet, equipe As String)
         archiveSubFolder = ARCHIVE_SUBFOLDER_NUIT
     End If
 
-    ' Déterminer le dossier de destination final
+    ' DÃ©terminer le dossier de destination final
     If isPastMonth Then
         targetPdfFolderPath = pdfTeamFolderPath & archiveSubFolder & "\"
-        Debug.Print "Export PDF: Cible pour mois passé: " & targetPdfFolderPath
+        Debug.Print "Export PDF: Cible pour mois passÃ©: " & targetPdfFolderPath
     Else
         targetPdfFolderPath = pdfTeamFolderPath
         Debug.Print "Export PDF: Cible pour mois actuel/futur: " & targetPdfFolderPath
     End If
 
-    ' Vérifier si le dossier de destination (principal ou archive) existe, sinon le créer
+    ' VÃ©rifier si le dossier de destination (principal ou archive) existe, sinon le crÃ©er
     If Dir(targetPdfFolderPath, vbDirectory) = "" Then
-        Debug.Print "Export PDF: Dossier cible '" & targetPdfFolderPath & "' non trouvé, tentative de création."
+        Debug.Print "Export PDF: Dossier cible '" & targetPdfFolderPath & "' non trouvÃ©, tentative de crÃ©ation."
         On Error Resume Next
         MkDir targetPdfFolderPath
         If Err.Number <> 0 Then
-             MsgBox "Impossible de créer ou d'accéder au dossier de destination PDF '" & targetPdfFolderPath & "'. Erreur: " & Err.Description, vbCritical, "Erreur de Dossier"
+             MsgBox "Impossible de crÃ©er ou d'accÃ©der au dossier de destination PDF '" & targetPdfFolderPath & "'. Erreur: " & Err.Description, vbCritical, "Erreur de Dossier"
              Exit Sub
         End If
-        On Error GoTo ErrorHandler_Export ' Rétablir la gestion d'erreur pour la suite
-        Debug.Print "Export PDF: Dossier cible '" & targetPdfFolderPath & "' créé."
+        On Error GoTo ErrorHandler_Export ' RÃ©tablir la gestion d'erreur pour la suite
+        Debug.Print "Export PDF: Dossier cible '" & targetPdfFolderPath & "' crÃ©Ã©."
     End If
 
 
     ' 6. Construire le nom de fichier FIXE par mois
-    ' Utiliser le nom du mois tel qu'interprété et formaté par le système pour cohérence
-    ' (par exemple, si la feuille est "Aout", mais le système génère "Août", utiliser "Août")
+    ' Utiliser le nom du mois tel qu'interprÃ©tÃ© et formatÃ© par le systÃ¨me pour cohÃ©rence
+    ' (par exemple, si la feuille est "Aout", mais le systÃ¨me gÃ©nÃ¨re "AoÃ»t", utiliser "AoÃ»t")
     Dim formattedSheetMonthName As String
     formattedSheetMonthName = Format(sheetMonthDate, "mmmm")
     formattedSheetMonthName = UCase(Left(formattedSheetMonthName, 1)) & Mid(formattedSheetMonthName, 2)
@@ -389,10 +409,10 @@ Sub ExportHorairePDF(ws As Worksheet, equipe As String)
     pdfFileName = "Horaire_" & formattedSheetMonthName & "_" & equipe & ".pdf"
 
 
-    ' 7. Définir la zone d'impression
+    ' 7. DÃ©finir la zone d'impression
     printRangeAddress = "$A$1:$AF$104"
 
-    ' 8. Exporter le PDF (Écrase le fichier existant dans le dossier cible)
+    ' 8. Exporter le PDF (Ã‰crase le fichier existant dans le dossier cible)
     success = False
     With ws
         .PageSetup.PrintArea = printRangeAddress
@@ -402,23 +422,23 @@ Sub ExportHorairePDF(ws As Worksheet, equipe As String)
         .PageSetup.FitToPagesWide = 1
         .PageSetup.FitToPagesTall = False
 
-        On Error Resume Next ' Erreur spécifique pour l'exportation
+        On Error Resume Next ' Erreur spÃ©cifique pour l'exportation
         .ExportAsFixedFormat Type:=xlTypePDF, fileName:=targetPdfFolderPath & pdfFileName, _
             Quality:=xlQualityStandard, IncludeDocProperties:=True, IgnorePrintAreas:=False, OpenAfterPublish:=False
         If Err.Number = 0 Then
             success = True
         Else
-            MsgBox "Échec de l'exportation PDF pour '" & pdfFileName & "'." & vbCrLf & vbCrLf & _
-                   "Vérifiez si le fichier n'est pas déjà ouvert ou si le chemin est correct." & vbCrLf & _
+            MsgBox "Ã‰chec de l'exportation PDF pour '" & pdfFileName & "'." & vbCrLf & vbCrLf & _
+                   "VÃ©rifiez si le fichier n'est pas dÃ©jÃ  ouvert ou si le chemin est correct." & vbCrLf & _
                    "Dossier cible : " & targetPdfFolderPath & vbCrLf & _
                    "Erreur: " & Err.Description, vbCritical, "Erreur Export PDF"
         End If
-        On Error GoTo ErrorHandler_Export ' Rétablir la gestion d'erreur générale
+        On Error GoTo ErrorHandler_Export ' RÃ©tablir la gestion d'erreur gÃ©nÃ©rale
     End With
 
-    ' 9. Message de succès et Préparation WhatsApp
+    ' 9. Message de succÃ¨s et PrÃ©paration WhatsApp
     If success Then
-        MsgBox "Le fichier PDF '" & pdfFileName & "' a été généré/mis à jour avec succès dans :" & vbCrLf & targetPdfFolderPath, vbInformation, "Export PDF Terminé"
+        MsgBox "Le fichier PDF '" & pdfFileName & "' a Ã©tÃ© gÃ©nÃ©rÃ©/mis Ã  jour avec succÃ¨s dans :" & vbCrLf & targetPdfFolderPath, vbInformation, "Export PDF TerminÃ©"
 
         Dim whatsappNumber As String
         Dim messageText As String
@@ -428,9 +448,9 @@ Sub ExportHorairePDF(ws As Worksheet, equipe As String)
         whatsappNumber = MY_WHATSAPP_NUMBER
 
         If whatsappNumber <> "" Then
-            ' Utiliser formattedSheetMonthName pour le message WhatsApp pour la cohérence
-            messageText = "L'horaire PDF de " & formattedSheetMonthName & " (" & equipe & ") a été mis à jour."
-            If isPastMonth Then messageText = messageText & " (Archivé)"
+            ' Utiliser formattedSheetMonthName pour le message WhatsApp pour la cohÃ©rence
+            messageText = "L'horaire PDF de " & formattedSheetMonthName & " (" & equipe & ") a Ã©tÃ© mis Ã  jour."
+            If isPastMonth Then messageText = messageText & " (ArchivÃ©)"
 
             On Error Resume Next
             encodedMessage = Application.EncodeURL(messageText)
@@ -440,15 +460,15 @@ Sub ExportHorairePDF(ws As Worksheet, equipe As String)
                 encodedMessage = Replace(encodedMessage, ")", "%29")
                 Err.Clear
             End If
-            On Error GoTo ErrorHandler_Export ' Rétablir
+            On Error GoTo ErrorHandler_Export ' RÃ©tablir
 
             whatsappLink = "https://wa.me/" & whatsappNumber & "?text=" & encodedMessage
 
             Dim openLinkConfirmation As VbMsgBoxResult
-            openLinkConfirmation = MsgBox("Le PDF a été généré." & vbCrLf & vbCrLf & _
+            openLinkConfirmation = MsgBox("Le PDF a Ã©tÃ© gÃ©nÃ©rÃ©." & vbCrLf & vbCrLf & _
                                          "Voulez-vous ouvrir WhatsApp maintenant ?" & vbCrLf & _
-                                         "(Un message sera pré-rempli dans une discussion avec vous-même. " & _
-                                         "Vous pourrez ensuite le TRANSFÉRER au groupe HORAIRES)", _
+                                         "(Un message sera prÃ©-rempli dans une discussion avec vous-mÃªme. " & _
+                                         "Vous pourrez ensuite le TRANSFÃ‰RER au groupe HORAIRES)", _
                                          vbYesNo + vbQuestion, "Ouvrir WhatsApp ?")
 
             If openLinkConfirmation = vbYes Then
@@ -460,10 +480,10 @@ Sub ExportHorairePDF(ws As Worksheet, equipe As String)
                            vbExclamation, "Erreur Ouverture Lien"
                     Err.Clear
                 End If
-                On Error GoTo ErrorHandler_Export ' Rétablir
+                On Error GoTo ErrorHandler_Export ' RÃ©tablir
             End If
         Else
-             Debug.Print "Numéro WhatsApp principal (MY_WHATSAPP_NUMBER) non configuré. Notification non préparée."
+             Debug.Print "NumÃ©ro WhatsApp principal (MY_WHATSAPP_NUMBER) non configurÃ©. Notification non prÃ©parÃ©e."
         End If
     End If
 
@@ -473,34 +493,34 @@ ErrorHandler_Export:
     MsgBox "Une erreur inattendue est survenue dans ExportHorairePDF : " & Err.Description, vbCritical, "Erreur Inattendue"
 End Sub
 
-' --- Procédures d'Appel Utilisateur ---
+' --- ProcÃ©dures d'Appel Utilisateur ---
 Sub Generate_PDF_Jour()
-    ' 1. Archiver les PDF du mois précédent (Jour ET Nuit) si présents dans les dossiers principaux
+    ' 1. Archiver les PDF du mois prÃ©cÃ©dent (Jour ET Nuit) si prÃ©sents dans les dossiers principaux
     ArchivePreviousMonthPDFs
 
     ' 2. Nettoyer les PDF (datant de 3 mois) DANS LES ARCHIVES (Jour ET Nuit)
     CleanupArchivedPDFs
 
-    ' 3. Exporter le PDF du mois en cours (ou passé) pour l'équipe Jour sur la feuille active
+    ' 3. Exporter le PDF du mois en cours (ou passÃ©) pour l'Ã©quipe Jour sur la feuille active
     If TypeName(ActiveSheet) = "Worksheet" Then
         ExportHorairePDF ActiveSheet, "Jour"
     Else
-        MsgBox "Veuillez sélectionner une feuille de calcul valide avant de lancer la génération du PDF Jour.", vbExclamation
+        MsgBox "Veuillez sÃ©lectionner une feuille de calcul valide avant de lancer la gÃ©nÃ©ration du PDF Jour.", vbExclamation
     End If
 End Sub
 
 Sub Generate_PDF_Nuit()
-    ' 1. Archiver les PDF du mois précédent (Jour ET Nuit) si présents dans les dossiers principaux
+    ' 1. Archiver les PDF du mois prÃ©cÃ©dent (Jour ET Nuit) si prÃ©sents dans les dossiers principaux
     ArchivePreviousMonthPDFs
 
     ' 2. Nettoyer les PDF (datant de 3 mois) DANS LES ARCHIVES (Jour ET Nuit)
     CleanupArchivedPDFs
 
-    ' 3. Exporter le PDF du mois en cours (ou passé) pour l'équipe Nuit sur la feuille active
+    ' 3. Exporter le PDF du mois en cours (ou passÃ©) pour l'Ã©quipe Nuit sur la feuille active
     If TypeName(ActiveSheet) = "Worksheet" Then
         ExportHorairePDF ActiveSheet, "Nuit"
     Else
-        MsgBox "Veuillez sélectionner une feuille de calcul valide avant de lancer la génération du PDF Nuit.", vbExclamation
+        MsgBox "Veuillez sÃ©lectionner une feuille de calcul valide avant de lancer la gÃ©nÃ©ration du PDF Nuit.", vbExclamation
     End If
 End Sub
 
