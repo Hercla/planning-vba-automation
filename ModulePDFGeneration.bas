@@ -11,31 +11,7 @@ Private Const PDF_FOLDER_NUIT As String = "HORAIRE PDF TEAM NUIT"
 Private Const ARCHIVE_SUBFOLDER_JOUR As String = "Archive_Jour" ' Nom du sous-dossier d'archive pour l'équipe JOUR
 Private Const ARCHIVE_SUBFOLDER_NUIT As String = "Archive_Nuit" ' Nom du sous-dossier d'archive pour l'équipe NUIT
 
-' --- CONSTANTE POUR WHATSAPP ---
-                    If yearStr = "" Then y = Year(tempDate)
-                Else
-                    m = 0 ' Month not recognized
-                End If
-            End If
-            On Error GoTo 0
-    End Select
 
-    If m = 0 Then
-        Exit Function ' Return CDate(0) as month was not recognized
-    End If
-
-    If yearStr <> "" Then
-        y = CInt(yearStr)
-    ElseIf y <> 0 Then ' y might have been set if monthStr was like "Avril 2024" but not split correctly.
-        ' This condition is mostly for the case where y was extracted from DateValue(monthStr)
-    ElseIf yearVal <> 0 Then
-        y = yearVal
-    Else
-        y = Year(Date) ' Default to current year
-    End If
-
-    GetMonthDateFromName = DateSerial(y, m, 1)
-End Function
 
 ' --- Archive les PDF du mois précédent dans leurs sous-dossiers d'archive respectifs ---
 Sub ArchivePreviousMonthPDFs()
