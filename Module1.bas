@@ -51,7 +51,7 @@ Const TARGET_SOIR_DATA As String = "3,3;3,3;3,3;3,3;3,3;3,3;3,3"
 ' FONCTIONS UTILITAIRES
 ' ============================
 
-Function IsJourFerieOuRecup(code As String) As Boolean
+Private Function IsJourFerieOuRecup(code As String) As Boolean
     Dim joursFeries As Variant
     joursFeries = Array("F 1-1", "F 8-5", "F 14-7", "F 15-8", "F 1-11", "F 11-11", "F 25-12", "R 8-5", "R 1-1", "ASC", "PENT", "L PENT", "L PAQ")
     IsJourFerieOuRecup = IsInArray(code, joursFeries)

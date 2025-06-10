@@ -1,7 +1,7 @@
 Attribute VB_Name = "AutoHoraire"
 Option Explicit
 
-Function IsJourFerieOuRecup(code As String) As Boolean
+Private Function IsJourFerieOuRecup(code As String) As Boolean
     code = UCase(Trim(code))
     If code Like "F *" Or code Like "R *" Then
         IsJourFerieOuRecup = True
@@ -20,7 +20,7 @@ Sub AutoCategoriserEtColorerHoraires()
     Dim valMatin As Double, valAM As Double, valSoir As Double, valNuit As Double
     Dim skipCodes As Variant
     Dim data As Variant, results As Variant
-    skipCodes = Array("CA", "MAL", "EM", "CP", "CSS", "F", "R", "RC", "RTT", "C", "CONGÉ", "CONGE")
+    skipCodes = Array("CA", "MAL", "EM", "CP", "CSS", "F", "R", "RC", "RTT", "C", "CONGÃ‰", "CONGE")
     
     lastRow = ws.Cells(ws.rows.Count, "A").End(xlUp).row
     If lastRow < 2 Then Exit Sub
@@ -38,7 +38,7 @@ Sub AutoCategoriserEtColorerHoraires()
         valMatin = 0: valAM = 0: valSoir = 0: valNuit = 0
         
         If codeHoraire = "" Or IsInArray(UCase(codeHoraire), skipCodes) Or IsJourFerieOuRecup(codeHoraire) Then
-            ' Rien à faire, tout reste à 0/"" (pas de cotation, pas de couleur)
+            ' Rien Ã  faire, tout reste Ã  0/"" (pas de cotation, pas de couleur)
         Else
             heures = ExtraireHeures(codeHoraire)
             Dim j As Long
@@ -80,16 +80,16 @@ Sub AutoCategoriserEtColorerHoraires()
         results(i, 4) = valNuit
     Next i
     
-    ' Écriture en une seule opération
+    ' Ã‰criture en une seule opÃ©ration
     ws.Range("C2:F" & lastRow).value = results
     
-    ' Coloration optimisée
+    ' Coloration optimisÃ©e
     ColorationOptimisee ws, lastRow
     
     Application.ScreenUpdating = True
     Application.Calculation = xlCalculationAutomatic
     Application.EnableEvents = True
-    MsgBox "Auto-catégorisation et coloration terminées !", vbInformation
+    MsgBox "Auto-catÃ©gorisation et coloration terminÃ©es !", vbInformation
     AjouterLegendeHoraires
 End Sub
 
@@ -122,15 +122,15 @@ Sub AjouterLegendeHoraires()
     Dim ws As Worksheet
     Set ws = ThisWorkbook.Sheets("Liste")
     Dim ligneLegende As Long
-    ligneLegende = 1 ' Ligne 1 pour la légende
+    ligneLegende = 1 ' Ligne 1 pour la lÃ©gende
 
-    ' Texte des légendes
+    ' Texte des lÃ©gendes
     ws.Cells(ligneLegende, "C").value = "Matin"
-    ws.Cells(ligneLegende, "D").value = "Après-midi"
+    ws.Cells(ligneLegende, "D").value = "AprÃ¨s-midi"
     ws.Cells(ligneLegende, "E").value = "Soir"
     ws.Cells(ligneLegende, "F").value = "Nuit"
 
-    ' Couleurs de la légende (mêmes que la macro principale)
+    ' Couleurs de la lÃ©gende (mÃªmes que la macro principale)
     ws.Cells(ligneLegende, "C").Interior.Color = RGB(255, 255, 153)      ' Jaune Matin
     ws.Cells(ligneLegende, "D").Interior.Color = RGB(255, 204, 153)      ' Orange AM
     ws.Cells(ligneLegende, "E").Interior.Color = RGB(153, 204, 255)      ' Bleu Soir
@@ -140,7 +140,7 @@ Sub AjouterLegendeHoraires()
     ws.Range("C1:F1").HorizontalAlignment = xlCenter
 
     ' Optionnel : Ajoute une info-bulle
-    ws.Cells(ligneLegende, "G").value = "Légende : Couleurs = présence sur le créneau"
+    ws.Cells(ligneLegende, "G").value = "LÃ©gende : Couleurs = prÃ©sence sur le crÃ©neau"
     ws.Cells(ligneLegende, "G").Font.Italic = True
 End Sub
 
@@ -166,7 +166,7 @@ Function ExtraireHeures(code As String) As Variant
     t = Split(code, " ")
     nb = UBound(t) - LBound(t) + 1
 
-    ' Nettoyage des entrées vides éventuelles
+    ' Nettoyage des entrÃ©es vides Ã©ventuelles
     Dim tempList As Collection
     Set tempList = New Collection
     For i = LBound(t) To UBound(t)
