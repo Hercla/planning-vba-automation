@@ -32,6 +32,7 @@ Sub CTR_CheckWeekendEligibility()
     Dim wsConfig As Worksheet
     Dim configCol As Long
     Dim validShifts As Object
+    Dim startRowJour As Long, startRowNuit As Long
 
     Set wsCurrent = ActiveSheet
 
@@ -39,17 +40,26 @@ Sub CTR_CheckWeekendEligibility()
     baseName = Replace(baseName, " nuit", "", , , vbTextCompare)
     baseName = Replace(baseName, " jour", "", , , vbTextCompare)
 
-    shiftType = ""
-    ' Detect shift type primarily using cells AO6 (jour) and AO31 (nuit)
+    ' --- Charger les paramètres depuis la feuille Configuration ---
     On Error Resume Next
-    If LCase(Trim(wsCurrent.Range("AO6").Value)) = "j" Then
+    Set wsConfig = ThisWorkbook.Sheets("Configuration")
+    On Error GoTo Cleanup
+    If wsConfig Is Nothing Then
+        MsgBox "La feuille 'Configuration' est introuvable.", vbCritical, "Vérification CTR"
+        GoTo Cleanup
+    End If
+
+    startRowJour = wsConfig.Cells(2, 2).Value
+    startRowNuit = wsConfig.Cells(2, 3).Value
+
+    shiftType = ""
+    If wsCurrent.Rows(startRowJour).Hidden = False Then
         shiftType = "jour"
-    ElseIf LCase(Trim(wsCurrent.Range("AO31").Value)) = "n" Then
+    ElseIf wsCurrent.Rows(startRowNuit).Hidden = False Then
         shiftType = "nuit"
     End If
-    On Error GoTo 0
 
-    ' Fallback: infer from sheet name if cells are empty
+    ' Fallback: infer from sheet name if visibility detection fails
     If shiftType = "" Then
         If InStr(1, wsCurrent.Name, "nuit", vbTextCompare) > 0 Then
             shiftType = "nuit"
@@ -61,15 +71,6 @@ Sub CTR_CheckWeekendEligibility()
     If shiftType = "" Then
         MsgBox "Cette macro doit être lancée depuis un planning jour ou nuit.", _
                vbExclamation, "Vérification CTR"
-        GoTo Cleanup
-    End If
-
-    ' --- Charger les paramètres depuis la feuille Configuration ---
-    On Error Resume Next
-    Set wsConfig = ThisWorkbook.Sheets("Configuration")
-    On Error GoTo Cleanup
-    If wsConfig Is Nothing Then
-        MsgBox "La feuille 'Configuration' est introuvable.", vbCritical, "Vérification CTR"
         GoTo Cleanup
     End If
 
