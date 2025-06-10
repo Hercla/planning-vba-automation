@@ -1,15 +1,7 @@
 Attribute VB_Name = "modJoursFeries"
 Option Explicit
 
-' Détecte si le code horaire est un jour férié ou un récup (ex : F 1-1, R 1-1, etc.)
-Function IsJourFerieOuRecup(code As String) As Boolean
-    code = UCase(Trim(code))
-    If code Like "F *" Or code Like "R *" Then
-        IsJourFerieOuRecup = True
-    Else
-        IsJourFerieOuRecup = False
-    End If
-End Function
+        If codeHoraire = "" Or IsInArray(UCase(codeHoraire), skipCodes) Or ModuleUtils.IsJourFerieOuRecup(codeHoraire) Then
 
 Sub AutoCategoriserEtColorerHoraires()
     Dim ws As Worksheet
@@ -20,14 +12,14 @@ Sub AutoCategoriserEtColorerHoraires()
     Dim heures As Variant
     Dim valMatin As Double, valAM As Double, valSoir As Double, valNuit As Double
     Dim skipCodes As Variant
-    skipCodes = Array("CA", "MAL", "EM", "CP", "CSS", "F", "R", "RC", "RTT", "C", "CONGÉ", "CONGE")
+    skipCodes = Array("CA", "MAL", "EM", "CP", "CSS", "F", "R", "RC", "RTT", "C", "CONGÃ‰", "CONGE")
     
     lastRow = ws.Cells(ws.rows.Count, "A").End(xlUp).row
     Application.ScreenUpdating = False
     
     For i = 2 To lastRow
         codeHoraire = Trim(ws.Cells(i, "A").value)
-        ' Ignore les lignes vides, codes de congé, fériés, récup
+        ' Ignore les lignes vides, codes de congÃ©, fÃ©riÃ©s, rÃ©cup
         If codeHoraire = "" Or IsInArray(UCase(codeHoraire), skipCodes) Or IsJourFerieOuRecup(codeHoraire) Then
             ws.Cells(i, "C").Resize(1, 4).value = ""
             EffaceCouleurs ws, i
@@ -44,7 +36,7 @@ Sub AutoCategoriserEtColorerHoraires()
             hFin = heures(j + 1)
             If hFin < hDeb Then hFin = hFin + 24 ' Gestion nuit traversant minuit
             
-            ' --- Matin (C) : 6h45 à 12h ---
+            ' --- Matin (C) : 6h45 Ã  12h ---
             If hDeb < 12 And hFin > 6.75 Then
                 If hDeb <= 8 And hFin >= 12 Then
                     valMatin = 1
@@ -52,7 +44,7 @@ Sub AutoCategoriserEtColorerHoraires()
                     valMatin = Application.Max(valMatin, 0.5)
                 End If
             End If
-            ' --- Après-midi (D) : 12h à 16h30 ---
+            ' --- AprÃ¨s-midi (D) : 12h Ã  16h30 ---
             If hDeb < 16.5 And hFin > 12 Then
                 If hDeb <= 12 And hFin >= 16.5 Then
                     valAM = 1
@@ -60,7 +52,7 @@ Sub AutoCategoriserEtColorerHoraires()
                     valAM = Application.Max(valAM, 0.5)
                 End If
             End If
-            ' --- Soir (E) : 15h30 à 20h15 ---
+            ' --- Soir (E) : 15h30 Ã  20h15 ---
             If hDeb < 20.25 And hFin > 15.5 Then
                 If hDeb <= 16 And hFin >= 20 Then
                     valSoir = 1
@@ -68,7 +60,7 @@ Sub AutoCategoriserEtColorerHoraires()
                     valSoir = Application.Max(valSoir, 0.5)
                 End If
             End If
-            ' --- Nuit (F) : >=19h ou traverse minuit jusqu'à 7h ---
+            ' --- Nuit (F) : >=19h ou traverse minuit jusqu'Ã  7h ---
             If (hDeb >= 19 Or hFin > 24 Or hFin <= 7) Or (hDeb >= 20 Or hDeb < 7) Then
                 valNuit = 1
             End If
@@ -86,7 +78,7 @@ Sub AutoCategoriserEtColorerHoraires()
 NextLine:
     Next i
     Application.ScreenUpdating = True
-    MsgBox "Auto-catégorisation et coloration terminées !", vbInformation
+    MsgBox "Auto-catÃ©gorisation et coloration terminÃ©es !", vbInformation
     AjouterLegendeHoraires
 End Sub
 
@@ -94,15 +86,15 @@ Sub AjouterLegendeHoraires()
     Dim ws As Worksheet
     Set ws = ThisWorkbook.Sheets("Liste")
     Dim ligneLegende As Long
-    ligneLegende = 1 ' Ligne 1 pour la légende
+    ligneLegende = 1 ' Ligne 1 pour la lÃ©gende
 
-    ' Texte des légendes
+    ' Texte des lÃ©gendes
     ws.Cells(ligneLegende, "C").value = "Matin"
-    ws.Cells(ligneLegende, "D").value = "Après-midi"
+    ws.Cells(ligneLegende, "D").value = "AprÃ¨s-midi"
     ws.Cells(ligneLegende, "E").value = "Soir"
     ws.Cells(ligneLegende, "F").value = "Nuit"
 
-    ' Couleurs de la légende (mêmes que la macro principale)
+    ' Couleurs de la lÃ©gende (mÃªmes que la macro principale)
     ws.Cells(ligneLegende, "C").Interior.Color = RGB(255, 255, 153)      ' Jaune Matin
     ws.Cells(ligneLegende, "D").Interior.Color = RGB(255, 204, 153)      ' Orange AM
     ws.Cells(ligneLegende, "E").Interior.Color = RGB(153, 204, 255)      ' Bleu Soir
@@ -112,7 +104,7 @@ Sub AjouterLegendeHoraires()
     ws.Range("C1:F1").HorizontalAlignment = xlCenter
 
     ' Optionnel : Ajoute une info-bulle
-    ws.Cells(ligneLegende, "G").value = "Légende : Couleurs = présence sur le créneau"
+    ws.Cells(ligneLegende, "G").value = "LÃ©gende : Couleurs = prÃ©sence sur le crÃ©neau"
     ws.Cells(ligneLegende, "G").Font.Italic = True
 End Sub
 
@@ -155,7 +147,7 @@ Function ExtraireHeures(code As String) As Variant
     t = Split(code, " ")
     nb = UBound(t) - LBound(t) + 1
 
-    ' Nettoyage des entrées vides éventuelles
+    ' Nettoyage des entrÃ©es vides Ã©ventuelles
     Dim tempList As Collection
     Set tempList = New Collection
     For i = LBound(t) To UBound(t)
@@ -206,15 +198,15 @@ Sub AjouterLegendeHor()
     Dim ws As Worksheet
     Set ws = ThisWorkbook.Sheets("Liste")
     Dim ligneLegende As Long
-    ligneLegende = 1 ' Ligne 1 pour la légende
+    ligneLegende = 1 ' Ligne 1 pour la lÃ©gende
 
-    ' Texte des légendes
+    ' Texte des lÃ©gendes
     ws.Cells(ligneLegende, "C").value = "Matin"
-    ws.Cells(ligneLegende, "D").value = "Après-midi"
+    ws.Cells(ligneLegende, "D").value = "AprÃ¨s-midi"
     ws.Cells(ligneLegende, "E").value = "Soir"
     ws.Cells(ligneLegende, "F").value = "Nuit"
 
-    ' Couleurs de la légende (mêmes que la macro principale)
+    ' Couleurs de la lÃ©gende (mÃªmes que la macro principale)
     ws.Cells(ligneLegende, "C").Interior.Color = RGB(255, 255, 153)      ' Jaune Matin
     ws.Cells(ligneLegende, "D").Interior.Color = RGB(255, 204, 153)      ' Orange AM
     ws.Cells(ligneLegende, "E").Interior.Color = RGB(153, 204, 255)      ' Bleu Soir
@@ -224,6 +216,6 @@ Sub AjouterLegendeHor()
     ws.Range("C1:F1").HorizontalAlignment = xlCenter
 
     ' Optionnel : Ajoute une info-bulle
-    ws.Cells(ligneLegende, "G").value = "Légende : Couleurs = présence sur le créneau"
+    ws.Cells(ligneLegende, "G").value = "LÃ©gende : Couleurs = prÃ©sence sur le crÃ©neau"
     ws.Cells(ligneLegende, "G").Font.Italic = True
 End Sub
