@@ -5,22 +5,6 @@ Option Explicit
 ' FONCTIONS UTILITAIRES
 '-------------------------------
 
-Function IsJourFerieOuRecup(code As String) As Boolean
-    Dim joursFeries As Variant
-    joursFeries = Array("F 1-1", "F 8-5", "F 14-7", "F 15-8", "F 1-11", "F 11-11", "F 25-12", "R 8-5", "R 1-1")
-    IsJourFerieOuRecup = IsInArray(code, joursFeries)
-End Function
-
-Function IsInArray(val As String, arr As Variant) As Boolean
-    Dim i As Long
-    For i = LBound(arr) To UBound(arr)
-        If StrComp(val, arr(i), vbTextCompare) = 0 Then
-            IsInArray = True
-            Exit Function
-        End If
-    Next i
-    IsInArray = False
-End Function
 
 Function ContientCodePlanningJourArr(planningArr As Variant, jourCol As Long, codeList As Variant) As Boolean
     Dim row As Long, code As String, i As Long
@@ -90,7 +74,7 @@ Sub AnalyseEtRemplacementPlanningUltraOptimise()
                               "Oui pour actif, Non pour tous.", vbYesNoCancel + vbQuestion, "Choix de l'analyse")
 
     If choixUtilisateur = vbCancel Then
-        MsgBox "Opération annulée.", vbInformation
+        MsgBox "OpÃ©ration annulÃ©e.", vbInformation
         Exit Sub
     End If
 
@@ -102,7 +86,7 @@ Sub AnalyseEtRemplacementPlanningUltraOptimise()
         Set ws = ActiveSheet
         If EstUnOngletDeMois(ws.Name) Then
             TraiterUneFeuilleDeMois ws, LdebFractions, LfinFractions, colDeb, groupesExclusifs, codesSuggestion
-            MsgBox "Analyse terminée : " & ws.Name, vbInformation
+            MsgBox "Analyse terminÃ©e : " & ws.Name, vbInformation
         Else
             MsgBox "Onglet invalide.", vbExclamation
         End If
@@ -112,7 +96,7 @@ Sub AnalyseEtRemplacementPlanningUltraOptimise()
                 TraiterUneFeuilleDeMois ws, LdebFractions, LfinFractions, colDeb, groupesExclusifs, codesSuggestion
             End If
         Next ws
-        MsgBox "Analyse globale terminée.", vbInformation
+        MsgBox "Analyse globale terminÃ©e.", vbInformation
     End If
 
     Application.Calculation = xlCalculationAutomatic

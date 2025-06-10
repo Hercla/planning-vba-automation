@@ -51,63 +51,6 @@ Const TARGET_SOIR_DATA As String = "3,3;3,3;3,3;3,3;3,3;3,3;3,3"
 ' FONCTIONS UTILITAIRES
 ' ============================
 
-Function IsJourFerieOuRecup(code As String) As Boolean
-    Dim joursFeries As Variant
-    joursFeries = Array("F 1-1", "F 8-5", "F 14-7", "F 15-8", "F 1-11", "F 11-11", "F 25-12", "R 8-5", "R 1-1", "ASC", "PENT", "L PENT", "L PAQ")
-    IsJourFerieOuRecup = IsInArray(code, joursFeries)
-End Function
-
-Function IsInArray(val As String, arr As Variant) As Boolean
-    Dim i As Long
-    IsInArray = False ' Initialize
-    If Not IsArray(arr) Then Exit Function
-    If LBound(arr) > UBound(arr) Then Exit Function ' Handle empty array
-
-    For i = LBound(arr) To UBound(arr)
-        If StrComp(val, CStr(arr(i)), vbTextCompare) = 0 Then
-            IsInArray = True
-            Exit Function
-        End If
-    Next i
-End Function
-
-' Helper function to check for a code in a single array
-Private Function CheckSingleArrayForCode(arrToCheck As Variant, jourCol As Long, codeToCheck As String, exactMatch As Boolean) As Boolean
-    Dim r As Long, cellVal As String
-    CheckSingleArrayForCode = False
-    If IsArray(arrToCheck) Then
-        If LBound(arrToCheck, 1) <= UBound(arrToCheck, 1) And LBound(arrToCheck, 2) <= UBound(arrToCheck, 2) Then ' Check if array has data
-            If jourCol >= LBound(arrToCheck, 2) And jourCol <= UBound(arrToCheck, 2) Then ' Check if jourCol is within bounds
-                For r = LBound(arrToCheck, 1) To UBound(arrToCheck, 1)
-                    On Error Resume Next ' In case arrToCheck(r, jourCol) is an error value
-                    cellVal = Trim(CStr(arrToCheck(r, jourCol)))
-                    On Error GoTo 0
-                    
-                    If exactMatch Then
-                        If StrComp(cellVal, codeToCheck, vbTextCompare) = 0 Then CheckSingleArrayForCode = True: Exit Function
-                    Else
-                        If InStr(1, cellVal, codeToCheck, vbTextCompare) > 0 Then CheckSingleArrayForCode = True: Exit Function
-                    End If
-                Next r
-            End If
-        End If
-    End If
-End Function
-
-' Vérifie si un code est déjà présent dans le planning principal ou les remplacements pour un jour donné.
-Function CodeDejaPresent(planningArr As Variant, rempArr As Variant, jourCol As Long, codeToCheck As String, Optional exactMatch As Boolean = False) As Boolean
-    CodeDejaPresent = False ' Initialize
-
-    If CheckSingleArrayForCode(planningArr, jourCol, codeToCheck, exactMatch) Then
-        CodeDejaPresent = True
-        Exit Function
-    End If
-
-    If CheckSingleArrayForCode(rempArr, jourCol, codeToCheck, exactMatch) Then
-        CodeDejaPresent = True
-        Exit Function
-    End If
-End Function
 
 Function ContientCodeDuGroupe(planningArr As Variant, rempContextArr As Variant, jourCol As Long, groupCodes As Variant) As Boolean
     Dim code As Variant
@@ -116,7 +59,7 @@ Function ContientCodeDuGroupe(planningArr As Variant, rempContextArr As Variant,
     If LBound(groupCodes) > UBound(groupCodes) Then Exit Function ' Handle empty groupCodes array
 
     For Each code In groupCodes
-        If CodeDejaPresent(planningArr, rempContextArr, jourCol, CStr(code), True) Then
+        If ModuleUtils.CodeDejaPresent(planningArr, rempContextArr, jourCol, CStr(code), True) Then
             ContientCodeDuGroupe = True
             Exit Function
         End If
@@ -266,7 +209,7 @@ Private Function TryPlaceCodeIfValid(ByVal codeToPlace As String, _
     TryPlaceCodeIfValid = False
     If codeToPlace = "" Then Exit Function
 
-    If Not CodeDejaPresent(planningArr, rempArrayToUpdate, targetCol, codeToPlace, exactMatchCheck) Then
+    If Not ModuleUtils.CodeDejaPresent(planningArr, rempArrayToUpdate, targetCol, codeToPlace, exactMatchCheck) Then
         rempArrayToUpdate(targetRowInRemp, targetCol) = codeToPlace
         ' Appel avec les paramètres dans le bon ordre pour la nouvelle signature
         Call MettreAJourCompteursMAS(codeToPlace, currentMatin, currentPM, currentSoir, absoluteRowForMAS, currentPresence7_8h)
@@ -571,7 +514,7 @@ Sub TraiterUneFeuilleDeMois(ws As Worksheet, _
             jourSemaine = ((ws.Cells(4, col + colDeb - 1).Column - colDeb) Mod 7) + 1 ' Fallback
             Debug.Print "Warning: Invalid date in sheet " & ws.Name & ", column " & (col + colDeb - 1) & ". Using fallback for day of week."
         End If
-        codeFerie = IsJourFerieOuRecup(CStr(ferieArr(1, col)))
+        codeFerie = ModuleUtils.IsJourFerieOuRecup(CStr(ferieArr(1, col)))
         
         ' Get target staffing for the day
         Dim targetMatin As Long, targetPM As Long, targetSoir As Long
@@ -806,12 +749,12 @@ Sub TraiterUneFeuilleDeMois(ws As Worksheet, _
                                 codeNuitAPlacer = CStr(nuitCodesProposes(LBound(nuitCodesProposes)))
                             Else
                                 ' If first slot filled with something else or empty, try preferred then other
-                                If Not CodeDejaPresent(planningArr, rempNuitArr, col, CStr(nuitCodesProposes(LBound(nuitCodesProposes))), True) Then
+                                If Not ModuleUtils.CodeDejaPresent(planningArr, rempNuitArr, col, CStr(nuitCodesProposes(LBound(nuitCodesProposes))), True) Then
                                     codeNuitAPlacer = CStr(nuitCodesProposes(LBound(nuitCodesProposes)))
-                                ElseIf Not CodeDejaPresent(planningArr, rempNuitArr, col, CStr(nuitCodesProposes(UBound(nuitCodesProposes))), True) Then
+                                ElseIf Not ModuleUtils.CodeDejaPresent(planningArr, rempNuitArr, col, CStr(nuitCodesProposes(UBound(nuitCodesProposes))), True) Then
                                      codeNuitAPlacer = CStr(nuitCodesProposes(UBound(nuitCodesProposes)))
                             codeNuitAPlacer = CStr(nuitCodesProposes(LBound(nuitCodesProposes)))
-                        ElseIf Not CodeDejaPresent(planningArr, rempNuitArr, col, CStr(nuitCodesProposes(UBound(nuitCodesProposes))), True) Then
+                        ElseIf Not ModuleUtils.CodeDejaPresent(planningArr, rempNuitArr, col, CStr(nuitCodesProposes(UBound(nuitCodesProposes))), True) Then
                              codeNuitAPlacer = CStr(nuitCodesProposes(UBound(nuitCodesProposes)))
                         End If
                     End If
@@ -820,7 +763,7 @@ Sub TraiterUneFeuilleDeMois(ws As Worksheet, _
                 End If
             End If
             
-            If codeNuitAPlacer <> "" And Not CodeDejaPresent(planningArr, rempNuitArr, col, codeNuitAPlacer, True) Then
+            If codeNuitAPlacer <> "" And Not ModuleUtils.CodeDejaPresent(planningArr, rempNuitArr, col, codeNuitAPlacer, True) Then
                 rempNuitArr(iNuitSlot, col) = codeNuitAPlacer
             End If
         End If
