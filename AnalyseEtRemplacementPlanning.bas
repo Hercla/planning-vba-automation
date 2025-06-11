@@ -5,10 +5,10 @@ Option Explicit
 ' FONCTIONS UTILITAIRES
 '-------------------------------
 
-Private Function IsJourFerieOuRecup(code As String) As Boolean
+Private Function EstCodeJourFerieOuRecup(code As String) As Boolean
     Dim joursFeries As Variant
     joursFeries = Array("F 1-1", "F 8-5", "F 14-7", "F 15-8", "F 1-11", "F 11-11", "F 25-12", "R 8-5", "R 1-1")
-    IsJourFerieOuRecup = IsInArray(code, joursFeries)
+    EstCodeJourFerieOuRecup = IsInArray(code, joursFeries)
 End Function
 
 Function IsInArray(val As String, arr As Variant) As Boolean

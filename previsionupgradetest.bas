@@ -16,7 +16,7 @@ Const NB_REMPLACEMENT_NUIT_LIGNES As Long = LIGNE_REMPLACEMENT_FIN_NUIT - LIGNE_
 ' --- END MODULE LEVEL CONSTANTS FOR ROW NUMBERS ---
 
 ' ============================
-Private Function IsJourFerieOuRecup(code As String) As Boolean
+' CONSTANTES INDICES (utilisées pour codesSuggestionPM et autres arrays)
 ' ============================
 Const SUGG_645 As Long = 0
 Const SUGG_7_1530 As Long = 1
@@ -35,10 +35,10 @@ Const SUGG_NUIT2 As Long = 11
 ' FONCTIONS UTILITAIRES (Inchangées - déjà efficaces)
 ' ============================
 
-Function IsJourFerieOuRecup(code As String) As Boolean
+Function EstCodeJourFerieOuRecup(code As String) As Boolean
     Dim joursFeries As Variant
     joursFeries = Array("F 1-1", "F 8-5", "F 14-7", "F 15-8", "F 1-11", "F 11-11", "F 25-12", "R 8-5", "R 1-1", "ASC", "PENT", "L PENT", "L PAQ")
-    IsJourFerieOuRecup = IsInArray(code, joursFeries)
+    EstCodeJourFerieOuRecup = IsInArray(code, joursFeries)
 End Function
 
 Function IsInArray(val As String, arr As Variant) As Boolean
@@ -315,7 +315,7 @@ Sub TraiterUneFeuilleDeMois(ws As Worksheet, _
             ' L'original utilise ws.Cells().Column, qui est une lecture rapide et reste ici.
             jourSemaine = ((ws.Cells(4, col + colDeb - 1).Column - colDeb) Mod 7) + 1
         End If
-        codeFerie = IsJourFerieOuRecup(CStr(ferieArr(1, col)))
+        codeFerie = EstCodeJourFerieOuRecup(CStr(ferieArr(1, col)))
         
         Dim targetMatin As Long, targetPM As Long, targetSoir As Long
         targetMatin = arrTargetMatin(jourSemaine - 1, IIf(codeFerie, 1, 0))

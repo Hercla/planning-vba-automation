@@ -4,7 +4,7 @@ Option Explicit
 ' SECTION 1: CONSTANTES GLOBALES POUR LES LIGNES DU PLANNING
 ' =========================================================================
 Public Const LIGNE_DEBUT_PLANNING_PERSONNEL As Long = 6
-Public Const LIGNE_FIN_PLANNING_PERSONNEL As Long = 30  ' Ajuste selon ta feuille réelle
+Public Const LIGNE_FIN_PLANNING_PERSONNEL As Long = 30  ' Ajuste selon ta feuille rÃ©elle
 Public Const LIGNE_REMPLACEMENT_DEBUT_JOUR As Long = 40
 Public Const LIGNE_REMPLACEMENT_FIN_JOUR As Long = 41
 Public Const NB_REMPLACEMENT_JOUR_LIGNES As Long = LIGNE_REMPLACEMENT_FIN_JOUR - LIGNE_REMPLACEMENT_DEBUT_JOUR + 1
@@ -39,7 +39,7 @@ Sub RemplacementPlanning_FullDynamiqueUltraOptimisee(ws As Worksheet, colDeb As 
         Else
             jourSemaine = ((ws.Cells(4, col + colDeb - 1).Column - colDeb) Mod 7) + 1
         End If
-        isFerie = IsJourFerieOuRecup(CStr(ferieArr(1, col)))
+        isFerie = EstCodeJourFerieOuRecup(CStr(ferieArr(1, col)))
         normJour = GetNormesPourJour(jourSemaine, isFerie)
         effectifMatin = 0: effectifAM = 0: effectifSoir = 0
         Dim r As Long, cellVal As String
@@ -103,7 +103,7 @@ NextCodeCand_Jour:
             End If
         Next slotLigne
 
-        ' === BOUCLE REMPLACEMENTS NUIT (entièrement paramétrable) ===
+        ' === BOUCLE REMPLACEMENTS NUIT (entiÃ¨rement paramÃ©trable) ===
         For slotLigne = 1 To NB_REMPLACEMENT_NUIT_LIGNES
             If Trim(CStr(rempNuitArr(slotLigne, col))) = "" Then
                 codePlaced = False
@@ -126,16 +126,16 @@ NextCodeCand_Jour:
         Next slotLigne
     Next col
 
-    ' --- ÉCRITURE UNIQUE ARRAYS ---
+    ' --- Ã‰CRITURE UNIQUE ARRAYS ---
     ws.Range(ws.Cells(LIGNE_REMPLACEMENT_DEBUT_JOUR, colDeb), ws.Cells(LIGNE_REMPLACEMENT_FIN_JOUR, colDeb + nbJours - 1)).Value2 = rempJourArr
     ws.Range(ws.Cells(LIGNE_REMPLACEMENT_DEBUT_NUIT, colDeb), ws.Cells(LIGNE_REMPLACEMENT_FIN_NUIT, colDeb + nbJours - 1)).Value2 = rempNuitArr
 End Sub
 
-' --- Wrapper d’exécution silencieuse sur la feuille active ---
+' --- Wrapper dâ€™exÃ©cution silencieuse sur la feuille active ---
 Sub LancerRemplacement_FullDynamique()
     Dim ws As Worksheet
     Set ws = ActiveSheet
-    Dim colDeb As Long: colDeb = 2 ' à ajuster si besoin (colonne B)
+    Dim colDeb As Long: colDeb = 2 ' Ã  ajuster si besoin (colonne B)
     Application.ScreenUpdating = False
     Application.EnableEvents = False
     Application.Calculation = xlCalculationManual
