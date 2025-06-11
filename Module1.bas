@@ -51,10 +51,10 @@ Const TARGET_SOIR_DATA As String = "3,3;3,3;3,3;3,3;3,3;3,3;3,3"
 ' FONCTIONS UTILITAIRES
 ' ============================
 
-Private Function IsJourFerieOuRecup(code As String) As Boolean
+Private Function EstCodeJourFerieOuRecup(code As String) As Boolean
     Dim joursFeries As Variant
     joursFeries = Array("F 1-1", "F 8-5", "F 14-7", "F 15-8", "F 1-11", "F 11-11", "F 25-12", "R 8-5", "R 1-1", "ASC", "PENT", "L PENT", "L PAQ")
-    IsJourFerieOuRecup = IsInArray(code, joursFeries)
+    EstCodeJourFerieOuRecup = IsInArray(code, joursFeries)
 End Function
 
 Function IsInArray(val As String, arr As Variant) As Boolean
@@ -571,7 +571,7 @@ Sub TraiterUneFeuilleDeMois(ws As Worksheet, _
             jourSemaine = ((ws.Cells(4, col + colDeb - 1).Column - colDeb) Mod 7) + 1 ' Fallback
             Debug.Print "Warning: Invalid date in sheet " & ws.Name & ", column " & (col + colDeb - 1) & ". Using fallback for day of week."
         End If
-        codeFerie = IsJourFerieOuRecup(CStr(ferieArr(1, col)))
+        codeFerie = EstCodeJourFerieOuRecup(CStr(ferieArr(1, col)))
         
         ' Get target staffing for the day
         Dim targetMatin As Long, targetPM As Long, targetSoir As Long

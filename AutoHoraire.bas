@@ -1,12 +1,12 @@
 Attribute VB_Name = "AutoHoraire"
 Option Explicit
 
-Private Function IsJourFerieOuRecup(code As String) As Boolean
+Private Function EstCodeJourFerieOuRecup(code As String) As Boolean
     code = UCase(Trim(code))
     If code Like "F *" Or code Like "R *" Then
-        IsJourFerieOuRecup = True
+        EstCodeJourFerieOuRecup = True
     Else
-        IsJourFerieOuRecup = False
+        EstCodeJourFerieOuRecup = False
     End If
 End Function
 
@@ -37,7 +37,7 @@ Sub AutoCategoriserEtColorerHoraires()
         codeHoraire = Trim(data(i, 1))
         valMatin = 0: valAM = 0: valSoir = 0: valNuit = 0
         
-        If codeHoraire = "" Or IsInArray(UCase(codeHoraire), skipCodes) Or IsJourFerieOuRecup(codeHoraire) Then
+        If codeHoraire = "" Or IsInArray(UCase(codeHoraire), skipCodes) Or EstCodeJourFerieOuRecup(codeHoraire) Then
             ' Rien à faire, tout reste à 0/"" (pas de cotation, pas de couleur)
         Else
             heures = ExtraireHeures(codeHoraire)

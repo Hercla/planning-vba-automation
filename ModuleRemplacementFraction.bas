@@ -36,11 +36,11 @@ Const SUGG_NUIT2 As Integer = 11     ' "20 7"
 ' =========================================================================
 
 ' -----------------------------------------------------------------------------
-' Fonction: IsJourFerieOuRecup
+' Fonction: EstCodeJourFerieOuRecup
 ' -----------------------------------------------------------------------------
-Public Function IsJourFerieOuRecup(code As String) As Boolean
-    ' Délégation à la fonction centralisée dans modConfigRegles
-    IsJourFerieOuRecup = EstJourFerieOuRecup(code)
+Public Function EstCodeJourFerieOuRecup(code As String) As Boolean
+    ' Délégation à la fonction centralisée dans modJoursFeries
+    EstCodeJourFerieOuRecup = modJoursFeries.EstCodeJourFerieOuRecup(code)
 End Function
 
 ' -----------------------------------------------------------------------------
