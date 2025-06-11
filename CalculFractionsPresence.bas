@@ -1,6 +1,24 @@
 Attribute VB_Name = "CalculFractionsPresence"
 Sub CalculateAllShiftsAllSheetsOptimized_Combined_V8_Hybrid()
 
+' --- Enumerations for presence lines ---
+Private Enum PresenceLine
+    PL_6h45 = 64
+    PL_7h8h = 65
+    PL_8h16h30 = 66
+    PL_C15 = 67
+    PL_C20 = 68
+    PL_C20E = 69
+    PL_C19 = 70
+    PL_1945 = 71
+    PL_207 = 72
+End Enum
+
+Private Enum PresenceAction
+    ActionSet = 1
+    ActionAdd = 2
+End Enum
+
  ' --- Configuration des Plages ---
     Const DayRangeAddress As String = "B6:AF25"
     Const NightRangeAddress As String = "B31:AF38"
@@ -11,19 +29,20 @@ Sub CalculateAllShiftsAllSheetsOptimized_Combined_V8_Hybrid()
     Const NightBaseRow As Long = 31
     Const ReplacementBaseRow As Long = 40
 
-    ' --- Couleurs à exclure ---
+    Dim codePresenceDay As Object, codePresenceNight As Object
+    ' --- Couleurs Ã  exclure ---
     Const YellowColor As Long = 65535
     Const BlueColor As Long = 16711680
 
-    ' --- !!! Listes Codes Autorisés (VÉRIFIÉES ET MISES À JOUR) !!! ---
-    ' Ces codes ne seront comptés (pour L60-L62) que s'ils viennent de la PLAGE JOUR (B6:AF25)
+    ' --- !!! Listes Codes AutorisÃ©s (VÃ‰RIFIÃ‰ES ET MISES Ã€ JOUR) !!! ---
+    ' Ces codes ne seront comptÃ©s (pour L60-L62) que s'ils viennent de la PLAGE JOUR (B6:AF25)
     Const AllowedCodesMatin As String = "|6:45 15:15|7 15:30|6:45 12:45|7:30 16|8 16:30|8:30 16:30|C 19|C 19 di|C 20 E|C 15|C 15 di|8:30 12:45 16:30 20:15|7 13|7:15 13:15|8 14|8:30 14|7 11:30|7:15 15:45|C 20|10 19|8 16|10 16:30|7 16:30|"
     Const AllowedCodesAM As String = "|6:45 15:15|7 15:30|7:30 16|10 16:30|8:30 16:30|C 15|16:30 20:15|8:30 12:45 16:30 20:15|15 19|15:30 19|8 16:30|7 16:30|8 16|12:30 16:30|7:15 15:45|12 16|13 19|10 19|14 20|"
     Const AllowedCodesSoir As String = "|C 15|16:30 20:15|8:30 12:45 16:30 20:15|C 20|C 20 E|C 19|15 19|15:30 19|C 19 di|C 15 di|16 20|14 20|13 19|10 19|"
-    ' --- FIN LISTES CODES AUTORISÉS ---
+    ' --- FIN LISTES CODES AUTORISÃ‰S ---
 
 
-    ' --- Déclarations ---
+    ' --- DÃ©clarations ---
     Dim wsListe As Worksheet, ws As Worksheet
     Dim listLR As Long, i As Long
     Dim listDataRange As Range
@@ -77,14 +96,16 @@ Sub CalculateAllShiftsAllSheetsOptimized_Combined_V8_Hybrid()
     ' --- Traitement Feuilles Mensuelles ---
     For Each ws In ThisWorkbook.Worksheets
         If ws.Visible = xlSheetVisible Then
-             Select Case True ' Vérifier nom feuille
+                    Set codePresenceDay = CreatePresenceCodeMapDay()
+                    Set codePresenceNight = CreatePresenceCodeMapNight()
+             Select Case True ' VÃ©rifier nom feuille
                 Case ws.Name Like "Janv*", ws.Name Like "Fev*", ws.Name Like "Mars*", _
                      ws.Name Like "Avril*", ws.Name Like "Mai*", ws.Name Like "Juin*", _
                      ws.Name Like "Juillet*", ws.Name Like "Aout*", ws.Name Like "Sept*", _
                      ws.Name Like "Oct*", ws.Name Like "Nov*", ws.Name Like "Dec*", _
                      ws.Name Like "JanvB", ws.Name Like "FevB"
 
-                    ' Réinitialiser totaux
+                    ' RÃ©initialiser totaux
                     ReDim dayTotalsMatin(1 To 31): ReDim dayTotalsApresMidi(1 To 31): ReDim dayTotalsSoir(1 To 31)
                     ReDim dayTotalsPresence6h45(1 To 31): ReDim dayTotalsPresence7h8h(1 To 31): ReDim dayTotalsPresence8h16h30(1 To 31)
                     ReDim dayTotalsPresenceC15(1 To 31): ReDim dayTotalsPresenceC20(1 To 31): ReDim dayTotalsPresenceC20E(1 To 31): ReDim dayTotalsPresenceC19(1 To 31)
@@ -116,7 +137,7 @@ Sub CalculateAllShiftsAllSheetsOptimized_Combined_V8_Hybrid()
                                     If shiftCode <> "" Then
                                         cleanShiftCode = Replace(shiftCode, " ", "")
                                         excludeCell = False
-                                        ' Logique exclusion couleur (inchangée)
+                                        ' Logique exclusion couleur (inchangÃ©e)
                                         If shiftCode = "7 15:30" Then
                                             wsRow = baseRow + rowIdx - 1: On Error Resume Next
                                             cellColor = ws.Cells(wsRow, wsCol).Interior.Color
@@ -154,35 +175,34 @@ Sub CalculateAllShiftsAllSheetsOptimized_Combined_V8_Hybrid()
                                                 End If
                                             End If ' Fin if shiftDict.Exists
 
-                                            ' --- CALCULS LIGNES PRÉSENCE L64-L70 (MAINTENANT UNIQUEMENT PLAGE JOUR) ---
-                                            Select Case cleanShiftCode
-                                                Case "6:4515:15": dayTotalsPresence6h45(dayIdx) = 1: dayTotalsPresence7h8h(dayIdx) = dayTotalsPresence7h8h(dayIdx) + 1
-                                                Case "6:4512:45": dayTotalsPresence6h45(dayIdx) = 1: dayTotalsPresence7h8h(dayIdx) = dayTotalsPresence7h8h(dayIdx) + 1
-                                                Case "6:4512:14", "713", "711", "711:30": dayTotalsPresence7h8h(dayIdx) = dayTotalsPresence7h8h(dayIdx) + 1
-                                                Case "715:30": If Not excludeCell Then dayTotalsPresence7h8h(dayIdx) = dayTotalsPresence7h8h(dayIdx) + 1
-                                                Case "7:3016": dayTotalsPresence7h8h(dayIdx) = dayTotalsPresence7h8h(dayIdx) + 1: dayTotalsPresence8h16h30(dayIdx) = 1
-                                                Case "1016:30", "8:3016:30": dayTotalsPresence8h16h30(dayIdx) = 1
-                                                Case "C15", "16:3020:15": dayTotalsPresenceC15(dayIdx) = 1
-                                                Case "8:3012:4516:3020:15": dayTotalsPresenceC15(dayIdx) = 1
-                                                Case "C20": dayTotalsPresenceC20(dayIdx) = 1
-                                                Case "C20E": dayTotalsPresenceC20E(dayIdx) = 1
-                                                Case "C19", "C19di": dayTotalsPresence7h8h(dayIdx) = dayTotalsPresence7h8h(dayIdx) + 1: dayTotalsPresenceC19(dayIdx) = 1
-                                                Case "1519", "15:3019": dayTotalsPresenceC19(dayIdx) = 1
-                                                ' Cases L71/L72 ne seront pas déclenchées ici car schedIdx = 0
-                                            End Select
-
-                                        ' --- CALCULS UNIQUEMENT SI PLAGE NUIT (schedIdx = 1) ---
-                                        ElseIf schedIdx = 1 Then
-                                            ' --- CALCULS LIGNES PRÉSENCE L71/L72 (UNIQUEMENT PLAGE NUIT) ---
-                                            Select Case cleanShiftCode
-                                                Case "19:456:45"
+                                            If codePresenceDay.Exists(cleanShiftCode) Then
+                                                If Not (cleanShiftCode = "715:30" And excludeCell) Then
+                                                    Dim act As Variant
+                                                    For Each act In codePresenceDay(cleanShiftCode)
+                                                        ApplyPresenceAction act(0), act(1), dayIdx, _
+                                                            dayTotalsPresence6h45, dayTotalsPresence7h8h, dayTotalsPresence8h16h30, _
+                                                            dayTotalsPresenceC15, dayTotalsPresenceC20, dayTotalsPresenceC20E, _
+                                                            dayTotalsPresenceC19, dayTotalsPresence1945, dayTotalsPresence207
+                                                    Next act
+                                                End If
+                                            End If
+                                            If codePresenceNight.Exists(cleanShiftCode) Then
+                                                Dim act As Variant
+                                                For Each act In codePresenceNight(cleanShiftCode)
+                                                    ApplyPresenceAction act(0), act(1), dayIdx, _
+                                                        dayTotalsPresence6h45, dayTotalsPresence7h8h, dayTotalsPresence8h16h30, _
+                                                        dayTotalsPresenceC15, dayTotalsPresenceC20, dayTotalsPresenceC20E, _
+                                                        dayTotalsPresenceC19, dayTotalsPresence1945, dayTotalsPresence207
+                                                Next act
+                                            End If
+                                            ' --- FIN CALCULS PLAGE NUIT ---'
                                                     dayTotalsPresence1945(dayIdx) = dayTotalsPresence1945(dayIdx) + 1
                                                 Case "207"
                                                     dayTotalsPresence207(dayIdx) = dayTotalsPresence207(dayIdx) + 1
                                             End Select
                                         ' --- FIN CALCULS PLAGE NUIT ---
 
-                                        ' End If ' Implicite : rien à faire pour schedIdx = 2 (Remplacement)
+                                        ' End If ' Implicite : rien Ã  faire pour schedIdx = 2 (Remplacement)
                                         End If ' Fin de la condition principale sur schedIdx
 
                                     End If ' End If shiftCode <> ""
@@ -196,12 +216,12 @@ Sub CalculateAllShiftsAllSheetsOptimized_Combined_V8_Hybrid()
                         dayTotalsTotalNuit(dayIdx) = dayTotalsPresence1945(dayIdx) + dayTotalsPresence207(dayIdx)
                     Next dayIdx
 
-                    ' --- Écriture résultats (SANS Ligne 63, AVEC Ligne 73) ---
+                    ' --- Ã‰criture rÃ©sultats (SANS Ligne 63, AVEC Ligne 73) ---
                     On Error Resume Next
                     ws.Range("B60:AF60").value = dayTotalsMatin
                     ws.Range("B61:AF61").value = dayTotalsApresMidi
                     ws.Range("B62:AF62").value = dayTotalsSoir
-                    ' Ligne 63 ignorée
+                    ' Ligne 63 ignorÃ©e
                     ws.Range("B64:AF64").value = dayTotalsPresence6h45
                     ws.Range("B65:AF65").value = dayTotalsPresence7h8h
                     ws.Range("B66:AF66").value = dayTotalsPresence8h16h30
@@ -211,9 +231,9 @@ Sub CalculateAllShiftsAllSheetsOptimized_Combined_V8_Hybrid()
                     ws.Range("B70:AF70").value = dayTotalsPresenceC19
                     ws.Range("B71:AF71").value = dayTotalsPresence1945
                     ws.Range("B72:AF72").value = dayTotalsPresence207
-                    ws.Range("B73:AF73").value = dayTotalsTotalNuit ' *** Écriture Ligne 73 ***
+                    ws.Range("B73:AF73").value = dayTotalsTotalNuit ' *** Ã‰criture Ligne 73 ***
                     If Err.Number <> 0 Then
-                         MsgBox "Avertissement: Écriture résultats échouée sur '" & ws.Name & "'.", vbExclamation: Err.Clear
+                         MsgBox "Avertissement: Ã‰criture rÃ©sultats Ã©chouÃ©e sur '" & ws.Name & "'.", vbExclamation: Err.Clear
                     End If
                     On Error GoTo ErrorHandler
 
@@ -224,7 +244,7 @@ Sub CalculateAllShiftsAllSheetsOptimized_Combined_V8_Hybrid()
 CleanExit_Success:
     Application.Calculation = xlCalculationAutomatic
     Application.ScreenUpdating = True
-    MsgBox "Calculs (Hybride, Filtres Plages Stricts + L73) terminés !", vbInformation
+    MsgBox "Calculs (Hybride, Filtres Plages Stricts + L73) terminÃ©s !", vbInformation
     Exit Sub
 
 CleanExit_Error:
@@ -234,24 +254,122 @@ CleanExit_Error:
 
 ErrorHandler:
     MsgBox "Erreur VBA #" & Err.Number & ": " & Err.Description & vbCrLf & _
-           "Procédure: CalculateAllShiftsAllSheetsOptimized_Combined_V8_Hybrid_StrictRanges_Final_V2", vbCritical
+           "ProcÃ©dure: CalculateAllShiftsAllSheetsOptimized_Combined_V8_Hybrid_StrictRanges_Final_V2", vbCritical
     Resume CleanExit_Error
 End Sub
 
 
-' --- Fonction ReadRangeToArray (CORRIGÉE) ---
+' --- Fonction ReadRangeToArray (CORRIGÃ‰E) ---
 Function ReadRangeToArray(ws As Worksheet, rangeAddr As String) As Variant
     Dim tempArray As Variant
 
-    On Error Resume Next ' Gérer l'erreur si la plage n'existe pas ou autre problème
+    On Error Resume Next ' GÃ©rer l'erreur si la plage n'existe pas ou autre problÃ¨me
     tempArray = ws.Range(rangeAddr).value
     If Err.Number <> 0 Then ' Si une erreur s'est produite lors de la lecture
         ReadRangeToArray = Empty ' Retourner Empty
         Err.Clear             ' Effacer l'erreur
-        On Error GoTo 0       ' Rétablir la gestion d'erreur normale
+' --- Utility to add presence codes ---
+Private Sub AddPresenceCode(dict As Object, code As String, ParamArray actions() As Variant)
+    Dim c As Collection, i As Long
+    Set c = New Collection
+    For i = LBound(actions) To UBound(actions)
+        c.Add actions(i)
+    Next i
+    dict.Add Replace(code, " ", ""), c
+End Sub
+
+Private Function CreatePresenceCodeMapDay() As Object
+    Dim d As Object
+    Set d = CreateObject("Scripting.Dictionary")
+    AddPresenceCode d, "6:4515:15", Array(PL_6h45, ActionSet), Array(PL_7h8h, ActionAdd)
+    AddPresenceCode d, "6:4512:45", Array(PL_6h45, ActionSet), Array(PL_7h8h, ActionAdd)
+    AddPresenceCode d, "6:4512:14", Array(PL_7h8h, ActionAdd)
+    AddPresenceCode d, "713", Array(PL_7h8h, ActionAdd)
+    AddPresenceCode d, "711", Array(PL_7h8h, ActionAdd)
+    AddPresenceCode d, "711:30", Array(PL_7h8h, ActionAdd)
+    AddPresenceCode d, "715:30", Array(PL_7h8h, ActionAdd)
+    AddPresenceCode d, "7:3016", Array(PL_7h8h, ActionAdd), Array(PL_8h16h30, ActionSet)
+    AddPresenceCode d, "1016:30", Array(PL_8h16h30, ActionSet)
+    AddPresenceCode d, "8:3016:30", Array(PL_8h16h30, ActionSet)
+    AddPresenceCode d, "C15", Array(PL_C15, ActionSet)
+    AddPresenceCode d, "16:3020:15", Array(PL_C15, ActionSet)
+    AddPresenceCode d, "8:3012:4516:3020:15", Array(PL_C15, ActionSet)
+    AddPresenceCode d, "C20", Array(PL_C20, ActionSet)
+    AddPresenceCode d, "C20E", Array(PL_C20E, ActionSet)
+    AddPresenceCode d, "C19", Array(PL_7h8h, ActionAdd), Array(PL_C19, ActionSet)
+    AddPresenceCode d, "C19di", Array(PL_7h8h, ActionAdd), Array(PL_C19, ActionSet)
+    AddPresenceCode d, "1519", Array(PL_C19, ActionSet)
+    AddPresenceCode d, "15:3019", Array(PL_C19, ActionSet)
+    Set CreatePresenceCodeMapDay = d
+End Function
+
+Private Function CreatePresenceCodeMapNight() As Object
+    Dim d As Object
+    Set d = CreateObject("Scripting.Dictionary")
+    AddPresenceCode d, "19:456:45", Array(PL_1945, ActionAdd)
+    AddPresenceCode d, "207", Array(PL_207, ActionAdd)
+    Set CreatePresenceCodeMapNight = d
+End Function
+
+Private Sub ApplyPresenceAction(lineId As PresenceLine, act As PresenceAction, dayIdx As Long, _
+        dayTotalsPresence6h45() As Long, dayTotalsPresence7h8h() As Long, dayTotalsPresence8h16h30() As Long, _
+        dayTotalsPresenceC15() As Long, dayTotalsPresenceC20() As Long, dayTotalsPresenceC20E() As Long, _
+        dayTotalsPresenceC19() As Long, dayTotalsPresence1945() As Long, dayTotalsPresence207() As Long)
+
+    Select Case lineId
+        Case PL_6h45
+            If act = ActionSet Then
+                dayTotalsPresence6h45(dayIdx) = 1
+            Else
+                dayTotalsPresence6h45(dayIdx) = dayTotalsPresence6h45(dayIdx) + 1
+            End If
+        Case PL_7h8h
+            If act = ActionSet Then
+                dayTotalsPresence7h8h(dayIdx) = 1
+            Else
+                dayTotalsPresence7h8h(dayIdx) = dayTotalsPresence7h8h(dayIdx) + 1
+            End If
+        Case PL_8h16h30
+            If act = ActionSet Then
+                dayTotalsPresence8h16h30(dayIdx) = 1
+            Else
+                dayTotalsPresence8h16h30(dayIdx) = dayTotalsPresence8h16h30(dayIdx) + 1
+            End If
+        Case PL_C15
+            If act = ActionSet Then
+                dayTotalsPresenceC15(dayIdx) = 1
+            Else
+                dayTotalsPresenceC15(dayIdx) = dayTotalsPresenceC15(dayIdx) + 1
+            End If
+        Case PL_C20
+            If act = ActionSet Then
+                dayTotalsPresenceC20(dayIdx) = 1
+            Else
+                dayTotalsPresenceC20(dayIdx) = dayTotalsPresenceC20(dayIdx) + 1
+            End If
+        Case PL_C20E
+            If act = ActionSet Then
+                dayTotalsPresenceC20E(dayIdx) = 1
+            Else
+                dayTotalsPresenceC20E(dayIdx) = dayTotalsPresenceC20E(dayIdx) + 1
+            End If
+        Case PL_C19
+            If act = ActionSet Then
+                dayTotalsPresenceC19(dayIdx) = 1
+            Else
+                dayTotalsPresenceC19(dayIdx) = dayTotalsPresenceC19(dayIdx) + 1
+            End If
+        Case PL_1945
+            dayTotalsPresence1945(dayIdx) = dayTotalsPresence1945(dayIdx) + 1
+        Case PL_207
+            dayTotalsPresence207(dayIdx) = dayTotalsPresence207(dayIdx) + 1
+    End Select
+End Sub
+
+        On Error GoTo 0       ' RÃ©tablir la gestion d'erreur normale
         Exit Function         ' Sortir de la fonction
     End If
-    On Error GoTo 0           ' Rétablir la gestion d'erreur normale si aucune erreur initiale
+    On Error GoTo 0           ' RÃ©tablir la gestion d'erreur normale si aucune erreur initiale
 
     ' Analyser le contenu de tempArray
     If IsEmpty(tempArray) Then
@@ -260,11 +378,11 @@ Function ReadRangeToArray(ws As Worksheet, rangeAddr As String) As Variant
     ' --- ATTENTION A CETTE LIGNE : ElseIf sans espace ---
     ElseIf Not IsArray(tempArray) Then ' La plage contient une seule valeur
 
-        ' Mettre cette valeur unique dans un tableau 1x1 pour la cohérence
+        ' Mettre cette valeur unique dans un tableau 1x1 pour la cohÃ©rence
         Dim singleCellArray(1 To 1, 1 To 1) As Variant
         singleCellArray(1, 1) = tempArray
         ReadRangeToArray = singleCellArray
-    Else ' La plage contenait plusieurs cellules, tempArray est déjà un tableau
+    Else ' La plage contenait plusieurs cellules, tempArray est dÃ©jÃ  un tableau
         ReadRangeToArray = tempArray
     End If
 
