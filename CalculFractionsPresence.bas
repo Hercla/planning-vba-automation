@@ -11,19 +11,22 @@ Sub CalculateAllShiftsAllSheetsOptimized_Combined_V8_Hybrid()
     Const NightBaseRow As Long = 31
     Const ReplacementBaseRow As Long = 40
 
-    ' --- Couleurs à exclure ---
-    Const YellowColor As Long = 65535
-    Const BlueColor As Long = 16711680
 
-    ' --- !!! Listes Codes Autorisés (VÉRIFIÉES ET MISES À JOUR) !!! ---
-    ' Ces codes ne seront comptés (pour L60-L62) que s'ils viennent de la PLAGE JOUR (B6:AF25)
+    Dim AllowedCodesMatin As Object
+    Dim AllowedCodesAM As Object
+    Dim AllowedCodesSoir As Object
+    Set AllowedCodesMatin = CreateAllowedCodesDict("|6:45 15:15|7 15:30|6:45 12:45|7:30 16|8 16:30|8:30 16:30|C 19|C 19 di|C 20 E|C 15|C 15 di|8:30 12:45 16:30 20:15|7 13|7:15 13:15|8 14|8:30 14|7 11:30|7:15 15:45|C 20|10 19|8 16|10 16:30|7 16:30|")
+    Set AllowedCodesAM = CreateAllowedCodesDict("|6:45 15:15|7 15:30|7:30 16|10 16:30|8:30 16:30|C 15|16:30 20:15|8:30 12:45 16:30 20:15|15 19|15:30 19|8 16:30|7 16:30|8 16|12:30 16:30|7:15 15:45|12 16|13 19|10 19|14 20|")
+    Set AllowedCodesSoir = CreateAllowedCodesDict("|C 15|16:30 20:15|8:30 12:45 16:30 20:15|C 20|C 20 E|C 19|15 19|15:30 19|C 19 di|C 15 di|16 20|14 20|13 19|10 19|")
+    ' --- !!! Listes Codes AutorisÃ©s (VÃ‰RIFIÃ‰ES ET MISES Ã€ JOUR) !!! ---
+    ' Ces codes ne seront comptÃ©s (pour L60-L62) que s'ils viennent de la PLAGE JOUR (B6:AF25)
     Const AllowedCodesMatin As String = "|6:45 15:15|7 15:30|6:45 12:45|7:30 16|8 16:30|8:30 16:30|C 19|C 19 di|C 20 E|C 15|C 15 di|8:30 12:45 16:30 20:15|7 13|7:15 13:15|8 14|8:30 14|7 11:30|7:15 15:45|C 20|10 19|8 16|10 16:30|7 16:30|"
     Const AllowedCodesAM As String = "|6:45 15:15|7 15:30|7:30 16|10 16:30|8:30 16:30|C 15|16:30 20:15|8:30 12:45 16:30 20:15|15 19|15:30 19|8 16:30|7 16:30|8 16|12:30 16:30|7:15 15:45|12 16|13 19|10 19|14 20|"
     Const AllowedCodesSoir As String = "|C 15|16:30 20:15|8:30 12:45 16:30 20:15|C 20|C 20 E|C 19|15 19|15:30 19|C 19 di|C 15 di|16 20|14 20|13 19|10 19|"
-    ' --- FIN LISTES CODES AUTORISÉS ---
+    ' --- FIN LISTES CODES AUTORISÃ‰S ---
 
 
-    ' --- Déclarations ---
+    ' --- DÃ©clarations ---
     Dim wsListe As Worksheet, ws As Worksheet
     Dim listLR As Long, i As Long
     Dim listDataRange As Range
@@ -77,14 +80,14 @@ Sub CalculateAllShiftsAllSheetsOptimized_Combined_V8_Hybrid()
     ' --- Traitement Feuilles Mensuelles ---
     For Each ws In ThisWorkbook.Worksheets
         If ws.Visible = xlSheetVisible Then
-             Select Case True ' Vérifier nom feuille
+             Select Case True ' VÃ©rifier nom feuille
                 Case ws.Name Like "Janv*", ws.Name Like "Fev*", ws.Name Like "Mars*", _
                      ws.Name Like "Avril*", ws.Name Like "Mai*", ws.Name Like "Juin*", _
                      ws.Name Like "Juillet*", ws.Name Like "Aout*", ws.Name Like "Sept*", _
                      ws.Name Like "Oct*", ws.Name Like "Nov*", ws.Name Like "Dec*", _
                      ws.Name Like "JanvB", ws.Name Like "FevB"
 
-                    ' Réinitialiser totaux
+                    ' RÃ©initialiser totaux
                     ReDim dayTotalsMatin(1 To 31): ReDim dayTotalsApresMidi(1 To 31): ReDim dayTotalsSoir(1 To 31)
                     ReDim dayTotalsPresence6h45(1 To 31): ReDim dayTotalsPresence7h8h(1 To 31): ReDim dayTotalsPresence8h16h30(1 To 31)
                     ReDim dayTotalsPresenceC15(1 To 31): ReDim dayTotalsPresenceC20(1 To 31): ReDim dayTotalsPresenceC20E(1 To 31): ReDim dayTotalsPresenceC19(1 To 31)
@@ -116,9 +119,9 @@ Sub CalculateAllShiftsAllSheetsOptimized_Combined_V8_Hybrid()
                                     If shiftCode <> "" Then
                                         cleanShiftCode = Replace(shiftCode, " ", "")
                                         excludeCell = False
-                                        ' Logique exclusion couleur (inchangée)
-                                        If shiftCode = "7 15:30" Then
-                                            wsRow = baseRow + rowIdx - 1: On Error Resume Next
+                                                    If AllowedCodesMatin.Exists(shiftCode) Then
+                                                    If AllowedCodesAM.Exists(shiftCode) Then
+                                                    If AllowedCodesSoir.Exists(shiftCode) Then
                                             cellColor = ws.Cells(wsRow, wsCol).Interior.Color
                                             If Err.Number <> 0 Then cellColor = 0: Err.Clear
                                             On Error GoTo ErrorHandler
@@ -154,7 +157,7 @@ Sub CalculateAllShiftsAllSheetsOptimized_Combined_V8_Hybrid()
                                                 End If
                                             End If ' Fin if shiftDict.Exists
 
-                                            ' --- CALCULS LIGNES PRÉSENCE L64-L70 (MAINTENANT UNIQUEMENT PLAGE JOUR) ---
+                                            ' --- CALCULS LIGNES PRÃ‰SENCE L64-L70 (MAINTENANT UNIQUEMENT PLAGE JOUR) ---
                                             Select Case cleanShiftCode
                                                 Case "6:4515:15": dayTotalsPresence6h45(dayIdx) = 1: dayTotalsPresence7h8h(dayIdx) = dayTotalsPresence7h8h(dayIdx) + 1
                                                 Case "6:4512:45": dayTotalsPresence6h45(dayIdx) = 1: dayTotalsPresence7h8h(dayIdx) = dayTotalsPresence7h8h(dayIdx) + 1
@@ -168,12 +171,12 @@ Sub CalculateAllShiftsAllSheetsOptimized_Combined_V8_Hybrid()
                                                 Case "C20E": dayTotalsPresenceC20E(dayIdx) = 1
                                                 Case "C19", "C19di": dayTotalsPresence7h8h(dayIdx) = dayTotalsPresence7h8h(dayIdx) + 1: dayTotalsPresenceC19(dayIdx) = 1
                                                 Case "1519", "15:3019": dayTotalsPresenceC19(dayIdx) = 1
-                                                ' Cases L71/L72 ne seront pas déclenchées ici car schedIdx = 0
+                                                ' Cases L71/L72 ne seront pas dÃ©clenchÃ©es ici car schedIdx = 0
                                             End Select
 
                                         ' --- CALCULS UNIQUEMENT SI PLAGE NUIT (schedIdx = 1) ---
                                         ElseIf schedIdx = 1 Then
-                                            ' --- CALCULS LIGNES PRÉSENCE L71/L72 (UNIQUEMENT PLAGE NUIT) ---
+                                            ' --- CALCULS LIGNES PRÃ‰SENCE L71/L72 (UNIQUEMENT PLAGE NUIT) ---
                                             Select Case cleanShiftCode
                                                 Case "19:456:45"
                                                     dayTotalsPresence1945(dayIdx) = dayTotalsPresence1945(dayIdx) + 1
@@ -182,7 +185,7 @@ Sub CalculateAllShiftsAllSheetsOptimized_Combined_V8_Hybrid()
                                             End Select
                                         ' --- FIN CALCULS PLAGE NUIT ---
 
-                                        ' End If ' Implicite : rien à faire pour schedIdx = 2 (Remplacement)
+                                        ' End If ' Implicite : rien Ã  faire pour schedIdx = 2 (Remplacement)
                                         End If ' Fin de la condition principale sur schedIdx
 
                                     End If ' End If shiftCode <> ""
@@ -196,12 +199,12 @@ Sub CalculateAllShiftsAllSheetsOptimized_Combined_V8_Hybrid()
                         dayTotalsTotalNuit(dayIdx) = dayTotalsPresence1945(dayIdx) + dayTotalsPresence207(dayIdx)
                     Next dayIdx
 
-                    ' --- Écriture résultats (SANS Ligne 63, AVEC Ligne 73) ---
+                    ' --- Ã‰criture rÃ©sultats (SANS Ligne 63, AVEC Ligne 73) ---
                     On Error Resume Next
                     ws.Range("B60:AF60").value = dayTotalsMatin
                     ws.Range("B61:AF61").value = dayTotalsApresMidi
                     ws.Range("B62:AF62").value = dayTotalsSoir
-                    ' Ligne 63 ignorée
+                    ' Ligne 63 ignorÃ©e
                     ws.Range("B64:AF64").value = dayTotalsPresence6h45
                     ws.Range("B65:AF65").value = dayTotalsPresence7h8h
                     ws.Range("B66:AF66").value = dayTotalsPresence8h16h30
@@ -211,9 +214,9 @@ Sub CalculateAllShiftsAllSheetsOptimized_Combined_V8_Hybrid()
                     ws.Range("B70:AF70").value = dayTotalsPresenceC19
                     ws.Range("B71:AF71").value = dayTotalsPresence1945
                     ws.Range("B72:AF72").value = dayTotalsPresence207
-                    ws.Range("B73:AF73").value = dayTotalsTotalNuit ' *** Écriture Ligne 73 ***
+                    ws.Range("B73:AF73").value = dayTotalsTotalNuit ' *** Ã‰criture Ligne 73 ***
                     If Err.Number <> 0 Then
-                         MsgBox "Avertissement: Écriture résultats échouée sur '" & ws.Name & "'.", vbExclamation: Err.Clear
+                         MsgBox "Avertissement: Ã‰criture rÃ©sultats Ã©chouÃ©e sur '" & ws.Name & "'.", vbExclamation: Err.Clear
                     End If
                     On Error GoTo ErrorHandler
 
@@ -224,7 +227,7 @@ Sub CalculateAllShiftsAllSheetsOptimized_Combined_V8_Hybrid()
 CleanExit_Success:
     Application.Calculation = xlCalculationAutomatic
     Application.ScreenUpdating = True
-    MsgBox "Calculs (Hybride, Filtres Plages Stricts + L73) terminés !", vbInformation
+    MsgBox "Calculs (Hybride, Filtres Plages Stricts + L73) terminÃ©s !", vbInformation
     Exit Sub
 
 CleanExit_Error:
@@ -234,24 +237,36 @@ CleanExit_Error:
 
 ErrorHandler:
     MsgBox "Erreur VBA #" & Err.Number & ": " & Err.Description & vbCrLf & _
-           "Procédure: CalculateAllShiftsAllSheetsOptimized_Combined_V8_Hybrid_StrictRanges_Final_V2", vbCritical
+           "ProcÃ©dure: CalculateAllShiftsAllSheetsOptimized_Combined_V8_Hybrid_StrictRanges_Final_V2", vbCritical
     Resume CleanExit_Error
 End Sub
 
 
-' --- Fonction ReadRangeToArray (CORRIGÉE) ---
+' --- Fonction ReadRangeToArray (CORRIGÃ‰E) ---
 Function ReadRangeToArray(ws As Worksheet, rangeAddr As String) As Variant
     Dim tempArray As Variant
 
-    On Error Resume Next ' Gérer l'erreur si la plage n'existe pas ou autre problème
+    On Error Resume Next ' GÃ©rer l'erreur si la plage n'existe pas ou autre problÃ¨me
     tempArray = ws.Range(rangeAddr).value
     If Err.Number <> 0 Then ' Si une erreur s'est produite lors de la lecture
         ReadRangeToArray = Empty ' Retourner Empty
         Err.Clear             ' Effacer l'erreur
-        On Error GoTo 0       ' Rétablir la gestion d'erreur normale
-        Exit Function         ' Sortir de la fonction
-    End If
-    On Error GoTo 0           ' Rétablir la gestion d'erreur normale si aucune erreur initiale
+
+Function CreateAllowedCodesDict(codes As String) As Object
+    Dim dict As Object
+    Dim arr As Variant
+    Dim i As Long, code As String
+
+    Set dict = CreateObject("Scripting.Dictionary")
+    arr = Split(codes, "|")
+    For i = LBound(arr) To UBound(arr)
+        code = Trim(arr(i))
+        If Len(code) > 0 Then
+            If Not dict.Exists(code) Then dict.Add code, True
+        End If
+    Next i
+    Set CreateAllowedCodesDict = dict
+End Function
 
     ' Analyser le contenu de tempArray
     If IsEmpty(tempArray) Then
@@ -260,11 +275,11 @@ Function ReadRangeToArray(ws As Worksheet, rangeAddr As String) As Variant
     ' --- ATTENTION A CETTE LIGNE : ElseIf sans espace ---
     ElseIf Not IsArray(tempArray) Then ' La plage contient une seule valeur
 
-        ' Mettre cette valeur unique dans un tableau 1x1 pour la cohérence
+        ' Mettre cette valeur unique dans un tableau 1x1 pour la cohÃ©rence
         Dim singleCellArray(1 To 1, 1 To 1) As Variant
         singleCellArray(1, 1) = tempArray
         ReadRangeToArray = singleCellArray
-    Else ' La plage contenait plusieurs cellules, tempArray est déjà un tableau
+    Else ' La plage contenait plusieurs cellules, tempArray est dÃ©jÃ  un tableau
         ReadRangeToArray = tempArray
     End If
 
