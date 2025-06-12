@@ -20,7 +20,11 @@ Sub AutoCategoriserEtColorerHoraires()
     Dim valMatin As Double, valAM As Double, valSoir As Double, valNuit As Double
     Dim skipCodes As Variant
     Dim data As Variant, results As Variant
-    skipCodes = Array("CA", "MAL", "EM", "CP", "CSS", "F", "R", "RC", "RTT", "C", "CONGÉ", "CONGE")
+    ' Liste complète des codes à ignorer
+    skipCodes = Array("FP", "CEP", "CP", "DP", "ANC", "CA", "CTR", "EL", "C SOC", "FOR", "FSH", "MAL", _
+                      "PETIT CHOM", "CSS", "DÉCÈS", "EM", "PAT", "PREAVIS", "VJ", "RCT", "RHS", "RV", _
+                      "DÉMÉNAG", "GRÈVE", "F", "R", "RC", "RTT", "C", "CONG", "CONGE", _
+                      "CRIC", "STAFF N", "RF", "H++")
     
     lastRow = ws.Cells(ws.rows.Count, "A").End(xlUp).row
     If lastRow < 2 Then Exit Sub
@@ -62,7 +66,8 @@ Sub AutoCategoriserEtColorerHoraires()
                         valAM = Application.Max(valAM, 0.5)
                     End If
                 End If
-                If hDeb < 20.25 And hFin > 15.5 Then
+                ' Un poste est considéré "Soir" seulement s'il commence avant 19h
+                If hDeb < 19 And hFin > 15.5 Then
                     If hDeb <= 16 And hFin >= 20 Then
                         valSoir = 1
                     Else
