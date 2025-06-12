@@ -12,18 +12,6 @@ Sub CalculateAllShiftsAllSheetsOptimized_Combined_V8_Hybrid()
     Const ReplacementBaseRow As Long = 40
 
 
-    Dim AllowedCodesMatin As Object
-    Dim AllowedCodesAM As Object
-    Dim AllowedCodesSoir As Object
-    Set AllowedCodesMatin = CreateAllowedCodesDict("|6:45 15:15|7 15:30|6:45 12:45|7:30 16|8 16:30|8:30 16:30|C 19|C 19 di|C 20 E|C 15|C 15 di|8:30 12:45 16:30 20:15|7 13|7:15 13:15|8 14|8:30 14|7 11:30|7:15 15:45|C 20|10 19|8 16|10 16:30|7 16:30|")
-    Set AllowedCodesAM = CreateAllowedCodesDict("|6:45 15:15|7 15:30|7:30 16|10 16:30|8:30 16:30|C 15|16:30 20:15|8:30 12:45 16:30 20:15|15 19|15:30 19|8 16:30|7 16:30|8 16|12:30 16:30|7:15 15:45|12 16|13 19|10 19|14 20|")
-    Set AllowedCodesSoir = CreateAllowedCodesDict("|C 15|16:30 20:15|8:30 12:45 16:30 20:15|C 20|C 20 E|C 19|15 19|15:30 19|C 19 di|C 15 di|16 20|14 20|13 19|10 19|")
-    ' --- !!! Listes Codes Autorisés (VÉRIFIÉES ET MISES À JOUR) !!! ---
-    ' Ces codes ne seront comptés (pour L60-L62) que s'ils viennent de la PLAGE JOUR (B6:AF25)
-    Const AllowedCodesMatin As String = "|6:45 15:15|7 15:30|6:45 12:45|7:30 16|8 16:30|8:30 16:30|C 19|C 19 di|C 20 E|C 15|C 15 di|8:30 12:45 16:30 20:15|7 13|7:15 13:15|8 14|8:30 14|7 11:30|7:15 15:45|C 20|10 19|8 16|10 16:30|7 16:30|"
-    Const AllowedCodesAM As String = "|6:45 15:15|7 15:30|7:30 16|10 16:30|8:30 16:30|C 15|16:30 20:15|8:30 12:45 16:30 20:15|15 19|15:30 19|8 16:30|7 16:30|8 16|12:30 16:30|7:15 15:45|12 16|13 19|10 19|14 20|"
-    Const AllowedCodesSoir As String = "|C 15|16:30 20:15|8:30 12:45 16:30 20:15|C 20|C 20 E|C 19|15 19|15:30 19|C 19 di|C 15 di|16 20|14 20|13 19|10 19|"
-    ' --- FIN LISTES CODES AUTORISÉS ---
 
 
     ' --- Déclarations ---
@@ -119,41 +107,24 @@ Sub CalculateAllShiftsAllSheetsOptimized_Combined_V8_Hybrid()
                                     If shiftCode <> "" Then
                                         cleanShiftCode = Replace(shiftCode, " ", "")
                                         excludeCell = False
-                                                    If AllowedCodesMatin.Exists(shiftCode) Then
-                                                    If AllowedCodesAM.Exists(shiftCode) Then
-                                                    If AllowedCodesSoir.Exists(shiftCode) Then
-                                            cellColor = ws.Cells(wsRow, wsCol).Interior.Color
-                                            If Err.Number <> 0 Then cellColor = 0: Err.Clear
-                                            On Error GoTo ErrorHandler
-                                            If cellColor = YellowColor Or cellColor = BlueColor Then excludeCell = True
-                                        End If
+                                        cellColor = ws.Cells(wsRow, wsCol).Interior.Color
+                                        If Err.Number <> 0 Then cellColor = 0: Err.Clear
+                                        On Error GoTo ErrorHandler
+                                        If cellColor = YellowColor Or cellColor = BlueColor Then excludeCell = True
 
                                         ' --- CALCULS UNIQUEMENT SI PLAGE JOUR (schedIdx = 0) ---
                                         If schedIdx = 0 Then
-                                            ' --- LOGIQUE HYBRIDE pour L60, L61, L62 ---
+                                            ' --- Comptage basé uniquement sur la feuille "Liste" ---
                                             If shiftDict.Exists(shiftCode) Then
                                                 shiftInfo = shiftDict(shiftCode)
-                                                ' Calcul L60
-                                                If shiftInfo(0) Then
-                                                    If InStr(1, AllowedCodesMatin, "|" & shiftCode & "|", vbTextCompare) > 0 Then
-                                                        If Not (shiftCode = "7 15:30" And excludeCell) Then
-                                                            dayTotalsMatin(dayIdx) = dayTotalsMatin(dayIdx) + 1
-                                                        End If
-                                                    End If
+                                                If shiftInfo(0) And Not excludeCell Then
+                                                    dayTotalsMatin(dayIdx) = dayTotalsMatin(dayIdx) + 1
                                                 End If
-                                                ' Calcul L61
-                                                If shiftInfo(1) Then
-                                                    If InStr(1, AllowedCodesAM, "|" & shiftCode & "|", vbTextCompare) > 0 Then
-                                                         If Not (shiftCode = "7 15:30" And excludeCell) Then
-                                                            dayTotalsApresMidi(dayIdx) = dayTotalsApresMidi(dayIdx) + 1
-                                                        End If
-                                                    End If
+                                                If shiftInfo(1) And Not excludeCell Then
+                                                    dayTotalsApresMidi(dayIdx) = dayTotalsApresMidi(dayIdx) + 1
                                                 End If
-                                                ' Calcul L62
-                                                If shiftInfo(2) Then
-                                                    If InStr(1, AllowedCodesSoir, "|" & shiftCode & "|", vbTextCompare) > 0 Then
-                                                        dayTotalsSoir(dayIdx) = dayTotalsSoir(dayIdx) + 1
-                                                    End If
+                                                If shiftInfo(2) And Not excludeCell Then
+                                                    dayTotalsSoir(dayIdx) = dayTotalsSoir(dayIdx) + 1
                                                 End If
                                             End If ' Fin if shiftDict.Exists
 
@@ -252,21 +223,6 @@ Function ReadRangeToArray(ws As Worksheet, rangeAddr As String) As Variant
         ReadRangeToArray = Empty ' Retourner Empty
         Err.Clear             ' Effacer l'erreur
 
-Function CreateAllowedCodesDict(codes As String) As Object
-    Dim dict As Object
-    Dim arr As Variant
-    Dim i As Long, code As String
-
-    Set dict = CreateObject("Scripting.Dictionary")
-    arr = Split(codes, "|")
-    For i = LBound(arr) To UBound(arr)
-        code = Trim(arr(i))
-        If Len(code) > 0 Then
-            If Not dict.Exists(code) Then dict.Add code, True
-        End If
-    Next i
-    Set CreateAllowedCodesDict = dict
-End Function
 
     ' Analyser le contenu de tempArray
     If IsEmpty(tempArray) Then
