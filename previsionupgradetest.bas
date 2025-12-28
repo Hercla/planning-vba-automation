@@ -5,7 +5,7 @@ Option Explicit
 Const LIGNE_DEBUT_PLANNING_PERSONNEL As Long = 6
 Const LIGNE_FIN_PLANNING_PERSONNEL As Long = 30  ' AJUSTER SI NECESSAIRE (ex: 24 ou la vraie fin du planning staff)
 Const LIGNE_AIDE_SOIGNANT_C19_PLANNING As Long = 24 ' Ligne typique d'un AS faisant C19 dans le PLANNING PRINCIPAL
-Const LIGNE_FIN_IDE_PLANNING As Long = 23   ' Derni√®re ligne consid√©r√©e pour une IDE dans le PLANNING PRINCIPAL pour C19
+Const LIGNE_FIN_IDE_PLANNING As Long = 23   ' DerniËre ligne considÈrÈe pour une IDE dans le PLANNING PRINCIPAL pour C19
 
 Const LIGNE_REMPLACEMENT_DEBUT_JOUR As Long = 40
 Const LIGNE_REMPLACEMENT_FIN_JOUR As Long = 41
@@ -16,14 +16,14 @@ Const NB_REMPLACEMENT_NUIT_LIGNES As Long = LIGNE_REMPLACEMENT_FIN_NUIT - LIGNE_
 ' --- END MODULE LEVEL CONSTANTS FOR ROW NUMBERS ---
 
 ' ============================
-' CONSTANTES INDICES (utilis√©es pour codesSuggestionPM et autres arrays)
+' CONSTANTES INDICES (utilisÈes pour codesSuggestionPM et autres arrays)
 ' ============================
 Const SUGG_645 As Long = 0
 Const SUGG_7_1530 As Long = 1
 Const SUGG_7_1130 As Long = 2
 Const SUGG_7_13 As Long = 3
 Const SUGG_8_1630 As Long = 4
-Const SUGG_C15_GRP As Long = 5 ' Array("C 15", "C 15 bis")
+Const SUGG_C15_GRP As Long = 5 ' Array("C 15", "C 15 di")
 Const SUGG_C20_CODE As Long = 6 ' Array("C 20")
 Const SUGG_C20E_CODE As Long = 7 ' Array("C 20 E")
 Const SUGG_C19_CODE As Long = 8  ' Array("C 19")
@@ -32,13 +32,13 @@ Const SUGG_NUIT1 As Long = 10
 Const SUGG_NUIT2 As Long = 11
 
 ' ============================
-' FONCTIONS UTILITAIRES (Inchang√©es - d√©j√† efficaces)
+' FONCTIONS UTILITAIRES (InchangÈes - dÈj‡ efficaces)
 ' ============================
 
-Function EstCodeJourFerieOuRecup(code As String) As Boolean
+Function IsJourFerieOuRecup(code As String) As Boolean
     Dim joursFeries As Variant
     joursFeries = Array("F 1-1", "F 8-5", "F 14-7", "F 15-8", "F 1-11", "F 11-11", "F 25-12", "R 8-5", "R 1-1", "ASC", "PENT", "L PENT", "L PAQ")
-    EstCodeJourFerieOuRecup = IsInArray(code, joursFeries)
+    IsJourFerieOuRecup = IsInArray(code, joursFeries)
 End Function
 
 Function IsInArray(val As String, arr As Variant) As Boolean
@@ -236,7 +236,7 @@ Function CreateTargetArray(data As Variant) As Variant
     CreateTargetArray = tempArr
 End Function
 
-' Petite proc√©dure pour actualiser les manques (Inchang√©e)
+' Petite procÈdure pour actualiser les manques (InchangÈe)
 Private Sub ActualiserManquesValeurs(ByRef manqueMatin As Long, ByRef manquePM As Long, ByRef manqueSoir As Long, _
                                    ByVal targetMatin As Long, ByVal targetPM As Long, ByVal targetSoir As Long, _
                                    ByVal actualMatin As Long, ByVal actualPM As Long, ByVal actualSoir As Long)
@@ -272,7 +272,7 @@ Sub TraiterUneFeuilleDeMois(ws As Worksheet, _
     If nbJours > daysInMonth Then nbJours = daysInMonth
     If nbJours <= 0 Then Exit Sub
 
-    ' Lire toutes les plages n√©cessaires dans des tableaux une seule fois
+    ' Lire toutes les plages nÈcessaires dans des tableaux une seule fois
     planningArr = ws.Range(ws.Cells(LIGNE_DEBUT_PLANNING_PERSONNEL, colDeb), ws.Cells(LIGNE_FIN_PLANNING_PERSONNEL, colDeb + nbJours - 1)).Value2
     If LdebFractions > 0 And LfinFractions >= LdebFractions Then
       fractionsArr = ws.Range(ws.Cells(LdebFractions, colDeb), ws.Cells(LfinFractions, colDeb + nbJours - 1)).Value2
@@ -282,11 +282,11 @@ Sub TraiterUneFeuilleDeMois(ws As Worksheet, _
     dateArr = ws.Range(ws.Cells(4, colDeb), ws.Cells(4, colDeb + nbJours - 1)).Value2
     ferieArr = ws.Range(ws.Cells(5, colDeb), ws.Cells(5, colDeb + nbJours - 1)).Value2
 
-    ' S'assurer que les tableaux de remplacement sont correctement dimensionn√©s m√™me si la plage initiale √©tait vide
+    ' S'assurer que les tableaux de remplacement sont correctement dimensionnÈs mÍme si la plage initiale Ètait vide
     If Not IsArray(rempJourArr) Then ReDim rempJourArr(1 To NB_REMPLACEMENT_JOUR_LIGNES, 1 To nbJours)
     If Not IsArray(rempNuitArr) Then ReDim rempNuitArr(1 To NB_REMPLACEMENT_NUIT_LIGNES, 1 To nbJours)
 
-    ' Les tableaux statiques pour les valeurs cibles (d√©j√† optimis√©)
+    ' Les tableaux statiques pour les valeurs cibles (dÈj‡ optimisÈ)
     Static arrTargetMatin As Variant, arrTargetPM As Variant, arrTargetSoir As Variant
     If IsEmpty(arrTargetMatin) Then
         Dim dataMatin As Variant, dataPM As Variant, dataSoir As Variant
@@ -304,18 +304,18 @@ Sub TraiterUneFeuilleDeMois(ws As Worksheet, _
     initialEffectifsPM = ws.Range(ws.Cells(61, colDeb), ws.Cells(61, colDeb + nbJours - 1)).Value2
     initialEffectifsSoir = ws.Range(ws.Cells(62, colDeb), ws.Cells(62, colDeb + nbJours - 1)).Value2
 
-    For col = 1 To nbJours ' It√©rer √† travers les colonnes (jours)
+    For col = 1 To nbJours ' ItÈrer ‡ travers les colonnes (jours)
         newlyPlaced_presence7_8h = 0
 
         If IsDate(dateArr(1, col)) Then
             dateJour = CDate(dateArr(1, col))
             jourSemaine = Weekday(dateJour, vbMonday)
         Else
-            ' Logique de secours pour le jour de la semaine si la date n'est pas pr√©sente.
+            ' Logique de secours pour le jour de la semaine si la date n'est pas prÈsente.
             ' L'original utilise ws.Cells().Column, qui est une lecture rapide et reste ici.
             jourSemaine = ((ws.Cells(4, col + colDeb - 1).Column - colDeb) Mod 7) + 1
         End If
-        codeFerie = EstCodeJourFerieOuRecup(CStr(ferieArr(1, col)))
+        codeFerie = IsJourFerieOuRecup(CStr(ferieArr(1, col)))
         
         Dim targetMatin As Long, targetPM As Long, targetSoir As Long
         targetMatin = arrTargetMatin(jourSemaine - 1, IIf(codeFerie, 1, 0))
@@ -323,7 +323,7 @@ Sub TraiterUneFeuilleDeMois(ws As Worksheet, _
         targetSoir = arrTargetSoir(jourSemaine - 1, IIf(codeFerie, 1, 0))
 
         Dim actualMatin As Long, actualPM As Long, actualSoir As Long
-        ' Utiliser les effectifs pr√©charg√©s dans les tableaux
+        ' Utiliser les effectifs prÈchargÈs dans les tableaux
         actualMatin = IIf(IsNumeric(initialEffectifsMatin(1, col)), CLng(initialEffectifsMatin(1, col)), 0)
         actualPM = IIf(IsNumeric(initialEffectifsPM(1, col)), CLng(initialEffectifsPM(1, col)), 0)
         actualSoir = IIf(IsNumeric(initialEffectifsSoir(1, col)), CLng(initialEffectifsSoir(1, col)), 0)
@@ -336,7 +336,7 @@ Sub TraiterUneFeuilleDeMois(ws As Worksheet, _
                 Dim code As String: code = ""
                 Dim codeSoirTrouve As Boolean: codeSoirTrouve = False
                 
-                ' --- LOGIQUE DE PRIORIT√â G√âN√âRALE (Exemple Matin/PM) ---
+                ' --- LOGIQUE DE PRIORIT… G…N…RALE (Exemple Matin/PM) ---
                 If manqueMatin > 0 And manquePM > 0 Then
                     code = codesSuggestion(SUGG_7_1530)(0)
                     If Not CodeDejaPresent(planningArr, rempJourArr, col, code, True) Then
@@ -347,7 +347,7 @@ Sub TraiterUneFeuilleDeMois(ws As Worksheet, _
                     End If
                 End If
                 
-                ' --- LOGIQUE SOIR SP√âCIFIQUE (VENDREDI/SAMEDI/JOUR F√âRI√â) ---
+                ' --- LOGIQUE SOIR SP…CIFIQUE (VENDREDI/SAMEDI/JOUR F…RI…) ---
                 Dim estJourSpecialSoir As Boolean
                 estJourSpecialSoir = (jourSemaine = 5 Or jourSemaine = 6 Or codeFerie)
 
@@ -359,24 +359,24 @@ Sub TraiterUneFeuilleDeMois(ws As Worksheet, _
                     Dim c19EstRoleAS As Boolean: c19EstRoleAS = False
                     Dim rScan As Long, valScan As String
                     
-                    ' 1. V√©rifier C19 dans le planning principal (utilise planningArr)
+                    ' 1. VÈrifier C19 dans le planning principal (utilise planningArr)
                     For rScan = LBound(planningArr, 1) To UBound(planningArr, 1)
-                        valScan = Trim(CStr(planningArr(rScan, col))) ' Acc√®s au tableau, pas √† la feuille
+                        valScan = Trim(CStr(planningArr(rScan, col))) ' AccËs au tableau, pas ‡ la feuille
                         If StrComp(valScan, c19CodePourJourSpecial, vbTextCompare) = 0 Then
                             c19EstPresentCeJour = True
-                            ' Mapper l'index du tableau √† la ligne absolue pour la v√©rification AS
+                            ' Mapper l'index du tableau ‡ la ligne absolue pour la vÈrification AS
                             If (LIGNE_DEBUT_PLANNING_PERSONNEL + rScan - 1) = LIGNE_AIDE_SOIGNANT_C19_PLANNING Then c19EstRoleAS = True
                             Exit For
                         End If
                     Next rScan
 
-                    ' 2. Si non trouv√© dans planning, v√©rifier dans les remplacements D√âJ√Ä faits pour ce jour
+                    ' 2. Si non trouvÈ dans planning, vÈrifier dans les remplacements D…J¿ faits pour ce jour
                     If Not c19EstPresentCeJour Then
                         For rScan = 1 To l - 1
                             valScan = Trim(CStr(rempJourArr(rScan, col)))
                             If StrComp(valScan, c19CodePourJourSpecial, vbTextCompare) = 0 Then
                                 c19EstPresentCeJour = True
-                                c19EstRoleAS = True ' R√®gle: C19 en remplacement est AS
+                                c19EstRoleAS = True ' RËgle: C19 en remplacement est AS
                                 Exit For
                             End If
                         Next rScan
@@ -386,18 +386,18 @@ Sub TraiterUneFeuilleDeMois(ws As Worksheet, _
                     Dim nbC20EActuels As Long: nbC20EActuels = 0
                     ' Scanner planningArr pour C20/C20E
                     For rScan = LBound(planningArr, 1) To UBound(planningArr, 1)
-                        valScan = Trim(CStr(planningArr(rScan, col))) ' Acc√®s au tableau, pas √† la feuille
+                        valScan = Trim(CStr(planningArr(rScan, col))) ' AccËs au tableau, pas ‡ la feuille
                         If StrComp(valScan, "C 20", vbTextCompare) = 0 Then nbC20Actuels = nbC20Actuels + 1
                         If StrComp(valScan, "C 20 E", vbTextCompare) = 0 Then nbC20EActuels = nbC20EActuels + 1
                     Next rScan
-                    ' Scanner rempJourArr pour C20/C20E (d√©j√† plac√©s pour ce jour)
+                    ' Scanner rempJourArr pour C20/C20E (dÈj‡ placÈs pour ce jour)
                     For rScan = 1 To l - 1
                         valScan = Trim(CStr(rempJourArr(rScan, col)))
                         If StrComp(valScan, "C 20", vbTextCompare) = 0 Then nbC20Actuels = nbC20Actuels + 1
                         If StrComp(valScan, "C 20 E", vbTextCompare) = 0 Then nbC20EActuels = nbC20EActuels + 1
                     Next rScan
 
-                    code = "" ' R√©initialiser
+                    code = "" ' RÈinitialiser
 
                     ' A. Placer C19 si manquant et besoin soir
                     If Not c19EstPresentCeJour And manqueSoir > 0 Then
@@ -412,7 +412,7 @@ Sub TraiterUneFeuilleDeMois(ws As Worksheet, _
                         End If
                     End If
 
-                    ' B. C19 est pr√©sent (ou vient d'√™tre plac√©). Placer les C20/C20E.
+                    ' B. C19 est prÈsent (ou vient d'Ítre placÈ). Placer les C20/C20E.
                     If c19EstPresentCeJour And manqueSoir > 0 Then
                         If c19EstRoleAS Then
                             If nbC20Actuels = 0 And Not CodeDejaPresent(planningArr, rempJourArr, col, "C 20", True) Then
@@ -459,7 +459,7 @@ Sub TraiterUneFeuilleDeMois(ws As Worksheet, _
 
                 ' --- LOGIQUE Manque Matin SEUL ---
                 If manqueMatin > 0 Then
-                    ' Ajoutez votre logique d√©taill√©e ici pour combler le manque Matin seul
+                    ' Ajoutez votre logique dÈtaillÈe ici pour combler le manque Matin seul
                     ' Par exemple:
                     ' If Not CodeDejaPresent(planningArr, rempJourArr, col, codesSuggestion(SUGG_7_13)(0), True) Then
                     '     rempJourArr(l, col) = codesSuggestion(SUGG_7_13)(0)
@@ -472,7 +472,7 @@ Sub TraiterUneFeuilleDeMois(ws As Worksheet, _
 NextSlotRemplacement:
         Next l
 
-        ' --- Gestion Nuit (Inchang√©e - d√©j√† efficace avec les tableaux) ---
+        ' --- Gestion Nuit (InchangÈe - dÈj‡ efficace avec les tableaux) ---
         Dim nuitCodesProposes As Variant
         If codeFerie Or jourSemaine = 5 Or jourSemaine = 6 Then
             nuitCodesProposes = Array(codesSuggestion(SUGG_NUIT1)(0), codesSuggestion(SUGG_NUIT2)(0))
@@ -517,7 +517,7 @@ NextSlotRemplacement:
 
     Next col
 
-    ' √âcrire les tableaux modifi√©s dans la feuille une seule fois
+    ' …crire les tableaux modifiÈs dans la feuille une seule fois
     ws.Range(ws.Cells(LIGNE_REMPLACEMENT_DEBUT_JOUR, colDeb), ws.Cells(LIGNE_REMPLACEMENT_FIN_JOUR, colDeb + nbJours - 1)).Value2 = rempJourArr
     ws.Range(ws.Cells(LIGNE_REMPLACEMENT_DEBUT_NUIT, colDeb), ws.Cells(LIGNE_REMPLACEMENT_FIN_NUIT, colDeb + nbJours - 1)).Value2 = rempNuitArr
 End Sub
@@ -531,17 +531,17 @@ Sub AnalyseEtRemplacementPlanningUltraOptimise()
     Dim groupesExclusifs As Variant
 
     colDeb = 2 ' <<<<<<< AJUSTER: 2 pour Colonne B, 3 pour C, etc.
-    LdebFractions = 0 ' <<<<<<< AJUSTER: Ligne de d√©but, 0 si non utilis√©
-    LfinFractions = 0 ' <<<<<<< AJUSTER: Ligne de fin, 0 si non utilis√©
+    LdebFractions = 0 ' <<<<<<< AJUSTER: Ligne de dÈbut, 0 si non utilisÈ
+    LfinFractions = 0 ' <<<<<<< AJUSTER: Ligne de fin, 0 si non utilisÈ
 
     codesSuggestion = Array( _
         Array("6:45 15:15"), Array("7 15:30"), Array("7 11:30"), Array("7 13"), Array("8 16:30"), _
-        Array("C 15", "C 15 bis"), Array("C 20"), Array("C 20 E"), Array("C 19"), _
+        Array("C 15", "C 15 di"), Array("C 20"), Array("C 20 E"), Array("C 19"), _
         Array("12:30 16:30"), Array("19:45 6:45"), Array("20 7"))
 
     groupesExclusifs = Array( _
         Array(codesSuggestion(SUGG_645)(0)), _
-        Array(codesSuggestion(SUGG_C15_GRP)(0), codesSuggestion(SUGG_C15_GRP)(1), "C 15 di"), _
+        Array(codesSuggestion(SUGG_C15_GRP)(0), codesSuggestion(SUGG_C15_GRP)(1), "C 15di"), _
         Array(codesSuggestion(SUGG_C20_CODE)(0), codesSuggestion(SUGG_C20E_CODE)(0)), _
         Array(codesSuggestion(SUGG_C19_CODE)(0), "C 19 di"))
 
@@ -552,7 +552,7 @@ Sub AnalyseEtRemplacementPlanningUltraOptimise()
                               vbYesNoCancel + vbQuestion, "Choix de l'analyse")
     
     If colDeb <= 0 Then
-        MsgBox "La colonne de d√©but (colDeb = " & colDeb & ") n'est pas valide. Op√©ration annul√©e.", vbCritical
+        MsgBox "La colonne de dÈbut (colDeb = " & colDeb & ") n'est pas valide. OpÈration annulÈe.", vbCritical
         Exit Sub
     End If
 
@@ -573,12 +573,12 @@ Sub AnalyseEtRemplacementPlanningUltraOptimise()
                     ws.Range(ws.Cells(LIGNE_REMPLACEMENT_DEBUT_NUIT, colDeb), ws.Cells(LIGNE_REMPLACEMENT_FIN_NUIT, lastColData)).ClearContents
                 End If
                 Application.ScreenUpdating = True
-                MsgBox "Lignes de remplacement effac√©es pour l'onglet '" & ws.Name & "'.", vbInformation
+                MsgBox "Lignes de remplacement effacÈes pour l'onglet '" & ws.Name & "'.", vbInformation
             Else
-                MsgBox "L'onglet actif (" & ws.Name & ") n'est pas un onglet de mois valide. Effacement non effectu√©.", vbExclamation
+                MsgBox "L'onglet actif (" & ws.Name & ") n'est pas un onglet de mois valide. Effacement non effectuÈ.", vbExclamation
             End If
         Else
-            MsgBox "Op√©ration annul√©e par l'utilisateur.", vbInformation
+            MsgBox "OpÈration annulÈe par l'utilisateur.", vbInformation
         End If
         Exit Sub
     End If
@@ -593,9 +593,9 @@ Sub AnalyseEtRemplacementPlanningUltraOptimise()
         If EstUnOngletDeMois(ws.Name) Then
             Debug.Print "Traitement onglet actif: " & ws.Name
             Call TraiterUneFeuilleDeMois(ws, LdebFractions, LfinFractions, colDeb, groupesExclusifs, codesSuggestion)
-            MsgBox "Analyse et remplacements pour l'onglet '" & ws.Name & "' termin√©s !", vbInformation
+            MsgBox "Analyse et remplacements pour l'onglet '" & ws.Name & "' terminÈs !", vbInformation
         Else
-            MsgBox "L'onglet actif (" & ws.Name & ") n'est pas un onglet de mois valide. Op√©ration non effectu√©e.", vbExclamation
+            MsgBox "L'onglet actif (" & ws.Name & ") n'est pas un onglet de mois valide. OpÈration non effectuÈe.", vbExclamation
         End If
     Else
         For Each ws In ThisWorkbook.Worksheets
@@ -604,7 +604,7 @@ Sub AnalyseEtRemplacementPlanningUltraOptimise()
                 Call TraiterUneFeuilleDeMois(ws, LdebFractions, LfinFractions, colDeb, groupesExclusifs, codesSuggestion)
             End If
         Next ws
-        MsgBox "Analyse et remplacements pour tous les mois termin√©s !", vbInformation
+        MsgBox "Analyse et remplacements pour tous les mois terminÈs !", vbInformation
     End If
 
 CleanExit:
@@ -615,7 +615,7 @@ CleanExit:
     Exit Sub
 
 ErrorHandler:
-    MsgBox "Erreur d'ex√©cution N¬∞ " & Err.Number & ":" & vbCrLf & Err.Description & vbCrLf & "Source: " & Err.Source, vbCritical, "Erreur VBA"
+    MsgBox "Erreur d'exÈcution N∞ " & Err.Number & ":" & vbCrLf & Err.Description & vbCrLf & "Source: " & Err.Source, vbCritical, "Erreur VBA"
     Resume CleanExit
 End Sub
 

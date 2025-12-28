@@ -312,7 +312,7 @@ Sub BuildCalendar(frm As Object, Optional iYear As Integer, Optional iMonth As I
 End Sub
 
 Sub DayClick(frm As Object, selectedDate As Date, dateControl As Control)
-    dateControl.Text = selectedDate
+    dateControl.text = selectedDate
     frm.Controls("frameDatePicker").Visible = False
 End Sub
 
@@ -320,8 +320,8 @@ Sub ToggleDatePicker(frm As Object, oControl As Control)
     If frm.Controls("frameDatePicker").Visible Then
         frm.Controls("frameDatePicker").Visible = False
     Else
-        If IsDate(oControl.Text) Then
-            BuildCalendar frm, Year(oControl.Text), Month(oControl.Text)
+        If IsDate(oControl.text) Then
+            BuildCalendar frm, Year(oControl.text), Month(oControl.text)
         Else
             BuildCalendar frm
         End If
@@ -339,7 +339,7 @@ Sub FillEmployeeComboBoxes()
     Dim i As Long
     
     Set ws = ThisWorkbook.Sheets("Personnel")
-    lastRow = ws.Cells(ws.rows.Count, "A").End(xlUp).row
+    lastRow = ws.Cells(ws.Rows.Count, "A").End(xlUp).row
     
     ' Clear and fill the ComboBoxes for each UserForm
     Dim userForms As Variant
@@ -391,7 +391,7 @@ Private Sub cmbNom_Change()
     Dim ws As Worksheet
     Dim i As Long
     Set ws = ThisWorkbook.Sheets("Personnel")
-    For i = 2 To ws.Cells(ws.rows.Count, "A").End(xlUp).row
+    For i = 2 To ws.Cells(ws.Rows.Count, "A").End(xlUp).row
         If ws.Cells(i, 2).value = Me.Controls("cmbNom").value Then
             Me.Controls("cmbPrenom").value = ws.Cells(i, 3).value
             Exit For
@@ -403,7 +403,7 @@ Private Sub cmbPrenom_Change()
     Dim ws As Worksheet
     Dim i As Long
     Set ws = ThisWorkbook.Sheets("Personnel")
-    For i = 2 To ws.Cells(ws.rows.Count, "A").End(xlUp).row
+    For i = 2 To ws.Cells(ws.Rows.Count, "A").End(xlUp).row
         If ws.Cells(i, 3).value = Me.Controls("cmbPrenom").value Then
             Me.Controls("cmbNom").value = ws.Cells(i, 2).value
             Exit For

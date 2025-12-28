@@ -133,12 +133,12 @@ Sub ColorYear()
             On Error GoTo ErrorHandler
             If Not planningRange Is Nothing Then
                 ' Identifier la colonne correspondant au lundi demandé
-                Set firstMondayCol = ws.rows(5).Find(What:=lundiDemande, LookIn:=xlValues, LookAt:=xlWhole)
+                Set firstMondayCol = ws.Rows(5).Find(What:=lundiDemande, LookIn:=xlValues, LookAt:=xlWhole)
                 If Not firstMondayCol Is Nothing Then
                     colStart = firstMondayCol.Column
                     Dim rowStart As Long, rowEnd As Long, colEnd As Long
                     rowStart = 6
-                    rowEnd = planningRange.rows.Count + 5
+                    rowEnd = planningRange.Rows.Count + 5
                     colEnd = planningRange.Columns.Count
 
                     ' Colorer les cellules à partir de la colonne du lundi demandé
