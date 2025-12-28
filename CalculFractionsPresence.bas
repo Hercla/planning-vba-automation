@@ -1,246 +1,251 @@
 Attribute VB_Name = "CalculFractionsPresence"
-Sub CalculateAllShiftsAllSheetsOptimized_Combined_V8_Hybrid()
+Option Explicit
 
- ' --- Configuration des Plages ---
-    Const DayRangeAddress As String = "B6:AF25"
-    Const NightRangeAddress As String = "B31:AF38"
-    Const ReplacementRangeAddress As String = "B40:AF58"
+' =========================================================================================
+'   MODULE DE CATÉGORISATION AUTOMATIQUE DES HORAIRES - VERSION FINALE DÉFINITIVE
+'   Date de dernière mise à jour: 12 juin 2025
+'
+'   Description:
+'   Ce module analyse les codes horaires et applique un ensemble de règles de
+'   catégorisation très précises pour remplir les 13 colonnes d'analyse.
+'   CORRECTION : Un demi-poste (0.5) requiert au moins 2h de présence dans le créneau.
+' =========================================================================================
 
-    ' --- Base Rows ---
-    Const DayBaseRow As Long = 6
-    Const NightBaseRow As Long = 31
-    Const ReplacementBaseRow As Long = 40
+Sub AutoCategoriserEtColorerHoraires_Final()
+    Dim ws As Worksheet
+    On Error Resume Next
+    Set ws = ThisWorkbook.Sheets("Liste")
+    On Error GoTo 0
+    If ws Is Nothing Then
+        MsgBox "Erreur : La feuille nommée ""Liste"" n'a pas été trouvée.", vbCritical, "Feuille Manquante"
+        Exit Sub
+    End If
 
+    Dim i As Long, lastRow As Long
+    Dim codeHoraire As String
+    Dim heures As Variant
+    Dim data As Variant, results As Variant
+    
+    Dim valMatin As Double, valAM As Double, valSoir As Double, valNuit As Double
+    Dim valP0645 As Long, valP7H8H As Long, valP8H1630 As Long
+    Dim valC15 As Long, valC20 As Long, valC20E As Long, valC19 As Long
+    Dim valN1945 As Double, valN20H7 As Double
 
+    lastRow = ws.Cells(ws.Rows.Count, "A").End(xlUp).row
+    If lastRow < 2 Then Exit Sub
 
-
-    ' --- DÃ©clarations ---
-    Dim wsListe As Worksheet, ws As Worksheet
-    Dim listLR As Long, i As Long
-    Dim listDataRange As Range
-    Dim shiftData As Variant
-    Dim shiftDict As Object ' Scripting.Dictionary
-    Dim shiftCode As String, cleanShiftCode As String
-    Dim shiftAssignments As Variant ' Array [M, AM, S, N] from Liste
-    Dim daySchedule As Variant, nightSchedule As Variant, replacementSchedule As Variant
-    Dim dayIdx As Long, rowIdx As Long, wsCol As Long, wsRow As Long
-    Dim shiftInfo As Variant
-    Dim cellColor As Long, excludeCell As Boolean
-    Dim scheduleArray As Variant, baseRow As Long
-
-    ' Arrays pour totaux
-    Dim dayTotalsMatin() As Long, dayTotalsApresMidi() As Long, dayTotalsSoir() As Long
-    Dim dayTotalsPresence6h45() As Long, dayTotalsPresence7h8h() As Long, dayTotalsPresence8h16h30() As Long
-    Dim dayTotalsPresenceC15() As Long, dayTotalsPresenceC20() As Long, dayTotalsPresenceC20E() As Long, dayTotalsPresenceC19() As Long
-    Dim dayTotalsPresence1945() As Long, dayTotalsPresence207() As Long
-    Dim dayTotalsTotalNuit() As Long ' Tableau pour Ligne 73
-
-    On Error GoTo ErrorHandler
     Application.ScreenUpdating = False
     Application.Calculation = xlCalculationManual
+    Application.EnableEvents = False
 
-    ' --- Initialisation Dictionnaire depuis "Liste" ---
-    On Error Resume Next
-    Set wsListe = ThisWorkbook.Sheets("Liste")
-    If wsListe Is Nothing Then MsgBox "Feuille 'Liste' introuvable.", vbCritical: GoTo CleanExit_Error
-    On Error GoTo ErrorHandler
-    Set shiftDict = CreateObject("Scripting.Dictionary")
-    listLR = wsListe.Cells(wsListe.rows.Count, "A").End(xlUp).row
-    If listLR >= 2 Then
-        Set listDataRange = wsListe.Range("A2:G" & listLR)
-        shiftData = listDataRange.value
-        If IsArray(shiftData) Then
-            For i = 1 To UBound(shiftData, 1)
-                shiftCode = Trim(CStr(shiftData(i, 1)))
-                If shiftCode <> "" Then
-                    shiftAssignments = Array( _
-                        (Not IsError(shiftData(i, 4))) And CBool(shiftData(i, 4) > 0), _
-                        (Not IsError(shiftData(i, 5))) And CBool(shiftData(i, 5) > 0), _
-                        (Not IsError(shiftData(i, 6))) And CBool(shiftData(i, 6) > 0), _
-                        (Not IsError(shiftData(i, 7))) And CBool(shiftData(i, 7) > 0))
-                    If Not shiftDict.Exists(shiftCode) Then shiftDict.Add shiftCode, shiftAssignments
-                End If
-            Next i
+    data = ws.Range("A2:A" & lastRow).value
+    ReDim results(1 To UBound(data), 1 To 13)
+
+    For i = 1 To UBound(data)
+        codeHoraire = Trim(CStr(data(i, 1)))
+
+        valMatin = 0: valAM = 0: valSoir = 0: valNuit = 0
+        valP0645 = 0: valP7H8H = 0: valP8H1630 = 0
+        valC15 = 0: valC20 = 0: valC20E = 0: valC19 = 0
+        valN1945 = 0: valN20H7 = 0
+
+        ' --- BLOC DE CONTRÔLE PRINCIPAL ---
+        Dim isLeaveCode As Boolean
+        isLeaveCode = False
+
+        ' Vérification prioritaire si c'est un code de congé
+        If UCase(codeHoraire) Like "F *" Or UCase(codeHoraire) Like "R *" Then
+            isLeaveCode = True
+        Else
+            ' Liste des autres codes à ignorer
+            Select Case UCase(codeHoraire)
+                Case "WE", "ANC", "CA", "CEP", "CP", "CS", "CSS", "CTR", "DÉCÈS", "DÉMÉNAG", "DP", "EL", "EM", "FP", "GRÈVE", "PAT", "PREAVIS", "RCT", "RHS", "RV", "VJ", "C SOC", "FOR", "FSH", "MAL", "PETIT CHOM", "CRIC", "STAFF N", "RF", "H++"
+                    isLeaveCode = True
+            End Select
         End If
-    End If
-    ' --- Fin Initialisation Dictionnaire ---
-
-    ' --- Traitement Feuilles Mensuelles ---
-    For Each ws In ThisWorkbook.Worksheets
-        If ws.Visible = xlSheetVisible Then
-             Select Case True ' VÃ©rifier nom feuille
-                Case ws.Name Like "Janv*", ws.Name Like "Fev*", ws.Name Like "Mars*", _
-                     ws.Name Like "Avril*", ws.Name Like "Mai*", ws.Name Like "Juin*", _
-                     ws.Name Like "Juillet*", ws.Name Like "Aout*", ws.Name Like "Sept*", _
-                     ws.Name Like "Oct*", ws.Name Like "Nov*", ws.Name Like "Dec*", _
-                     ws.Name Like "JanvB", ws.Name Like "FevB"
-
-                    ' RÃ©initialiser totaux
-                    ReDim dayTotalsMatin(1 To 31): ReDim dayTotalsApresMidi(1 To 31): ReDim dayTotalsSoir(1 To 31)
-                    ReDim dayTotalsPresence6h45(1 To 31): ReDim dayTotalsPresence7h8h(1 To 31): ReDim dayTotalsPresence8h16h30(1 To 31)
-                    ReDim dayTotalsPresenceC15(1 To 31): ReDim dayTotalsPresenceC20(1 To 31): ReDim dayTotalsPresenceC20E(1 To 31): ReDim dayTotalsPresenceC19(1 To 31)
-                    ReDim dayTotalsPresence1945(1 To 31): ReDim dayTotalsPresence207(1 To 31)
-                    ReDim dayTotalsTotalNuit(1 To 31) ' ReDim Tableau Ligne 73
-
-                    ' Lire planning
-                    daySchedule = ReadRangeToArray(ws, DayRangeAddress)
-                    nightSchedule = ReadRangeToArray(ws, NightRangeAddress)
-                    replacementSchedule = ReadRangeToArray(ws, ReplacementRangeAddress)
-
-                    ' Boucles Jour / Plages / Lignes
-                    For dayIdx = 1 To 31
-                        wsCol = dayIdx + 1
-                        Dim arrSchedules As Variant: arrSchedules = Array(daySchedule, nightSchedule, replacementSchedule)
-                        Dim arrBaseRows As Variant: arrBaseRows = Array(DayBaseRow, NightBaseRow, ReplacementBaseRow)
-                        Dim schedIdx As Long
-
-                        ' Boucle sur les 3 plages : 0=Jour, 1=Nuit, 2=Remplacement
-                        For schedIdx = LBound(arrSchedules) To UBound(arrSchedules)
-                            scheduleArray = arrSchedules(schedIdx): baseRow = arrBaseRows(schedIdx)
-                            If IsArray(scheduleArray) Then
-                                For rowIdx = 1 To UBound(scheduleArray, 1)
-                                    If Not IsError(scheduleArray(rowIdx, dayIdx)) Then
-                                        shiftCode = Trim(CStr(scheduleArray(rowIdx, dayIdx)))
-                                    Else: shiftCode = ""
-                                    End If
-
-                                    If shiftCode <> "" Then
-                                        cleanShiftCode = Replace(shiftCode, " ", "")
-                                        excludeCell = False
-                                        cellColor = ws.Cells(wsRow, wsCol).Interior.Color
-                                        If Err.Number <> 0 Then cellColor = 0: Err.Clear
-                                        On Error GoTo ErrorHandler
-                                        If cellColor = YellowColor Or cellColor = BlueColor Then excludeCell = True
-
-                                        ' --- CALCULS UNIQUEMENT SI PLAGE JOUR (schedIdx = 0) ---
-                                        If schedIdx = 0 Then
-                                            ' --- Comptage basÃ© uniquement sur la feuille "Liste" ---
-                                            If shiftDict.Exists(shiftCode) Then
-                                                shiftInfo = shiftDict(shiftCode)
-                                                If shiftInfo(0) And Not excludeCell Then
-                                                    dayTotalsMatin(dayIdx) = dayTotalsMatin(dayIdx) + 1
-                                                End If
-                                                If shiftInfo(1) And Not excludeCell Then
-                                                    dayTotalsApresMidi(dayIdx) = dayTotalsApresMidi(dayIdx) + 1
-                                                End If
-                                                If shiftInfo(2) And Not excludeCell Then
-                                                    dayTotalsSoir(dayIdx) = dayTotalsSoir(dayIdx) + 1
-                                                End If
-                                            End If ' Fin if shiftDict.Exists
-
-                                            ' --- CALCULS LIGNES PRÃ‰SENCE L64-L70 (MAINTENANT UNIQUEMENT PLAGE JOUR) ---
-                                            Select Case cleanShiftCode
-                                                Case "6:4515:15": dayTotalsPresence6h45(dayIdx) = 1: dayTotalsPresence7h8h(dayIdx) = dayTotalsPresence7h8h(dayIdx) + 1
-                                                Case "6:4512:45": dayTotalsPresence6h45(dayIdx) = 1: dayTotalsPresence7h8h(dayIdx) = dayTotalsPresence7h8h(dayIdx) + 1
-                                                Case "6:4512:14", "713", "711", "711:30": dayTotalsPresence7h8h(dayIdx) = dayTotalsPresence7h8h(dayIdx) + 1
-                                                Case "715:30": If Not excludeCell Then dayTotalsPresence7h8h(dayIdx) = dayTotalsPresence7h8h(dayIdx) + 1
-                                                Case "7:3016": dayTotalsPresence7h8h(dayIdx) = dayTotalsPresence7h8h(dayIdx) + 1: dayTotalsPresence8h16h30(dayIdx) = 1
-                                                Case "1016:30", "8:3016:30": dayTotalsPresence8h16h30(dayIdx) = 1
-                                                Case "C15", "16:3020:15": dayTotalsPresenceC15(dayIdx) = 1
-                                                Case "8:3012:4516:3020:15": dayTotalsPresenceC15(dayIdx) = 1
-                                                Case "C20": dayTotalsPresenceC20(dayIdx) = 1
-                                                Case "C20E": dayTotalsPresenceC20E(dayIdx) = 1
-                                                Case "C19", "C19di": dayTotalsPresence7h8h(dayIdx) = dayTotalsPresence7h8h(dayIdx) + 1: dayTotalsPresenceC19(dayIdx) = 1
-                                                Case "1519", "15:3019": dayTotalsPresenceC19(dayIdx) = 1
-                                                ' Cases L71/L72 ne seront pas dÃ©clenchÃ©es ici car schedIdx = 0
-                                            End Select
-
-                                        ' --- CALCULS UNIQUEMENT SI PLAGE NUIT (schedIdx = 1) ---
-                                        ElseIf schedIdx = 1 Then
-                                            ' --- CALCULS LIGNES PRÃ‰SENCE L71/L72 (UNIQUEMENT PLAGE NUIT) ---
-                                            Select Case cleanShiftCode
-                                                Case "19:456:45"
-                                                    dayTotalsPresence1945(dayIdx) = dayTotalsPresence1945(dayIdx) + 1
-                                                Case "207"
-                                                    dayTotalsPresence207(dayIdx) = dayTotalsPresence207(dayIdx) + 1
-                                            End Select
-                                        ' --- FIN CALCULS PLAGE NUIT ---
-
-                                        ' End If ' Implicite : rien Ã  faire pour schedIdx = 2 (Remplacement)
-                                        End If ' Fin de la condition principale sur schedIdx
-
-                                    End If ' End If shiftCode <> ""
-                                Next rowIdx
-                            End If ' End If IsArray
-                        Next schedIdx ' Prochaine Plage
-                    Next dayIdx ' Fin boucle jours
-
-                    ' *** Calculer le total pour la ligne 73 ***
-                    For dayIdx = 1 To 31
-                        dayTotalsTotalNuit(dayIdx) = dayTotalsPresence1945(dayIdx) + dayTotalsPresence207(dayIdx)
-                    Next dayIdx
-
-                    ' --- Ã‰criture rÃ©sultats (SANS Ligne 63, AVEC Ligne 73) ---
-                    On Error Resume Next
-                    ws.Range("B60:AF60").value = dayTotalsMatin
-                    ws.Range("B61:AF61").value = dayTotalsApresMidi
-                    ws.Range("B62:AF62").value = dayTotalsSoir
-                    ' Ligne 63 ignorÃ©e
-                    ws.Range("B64:AF64").value = dayTotalsPresence6h45
-                    ws.Range("B65:AF65").value = dayTotalsPresence7h8h
-                    ws.Range("B66:AF66").value = dayTotalsPresence8h16h30
-                    ws.Range("B67:AF67").value = dayTotalsPresenceC15
-                    ws.Range("B68:AF68").value = dayTotalsPresenceC20
-                    ws.Range("B69:AF69").value = dayTotalsPresenceC20E
-                    ws.Range("B70:AF70").value = dayTotalsPresenceC19
-                    ws.Range("B71:AF71").value = dayTotalsPresence1945
-                    ws.Range("B72:AF72").value = dayTotalsPresence207
-                    ws.Range("B73:AF73").value = dayTotalsTotalNuit ' *** Ã‰criture Ligne 73 ***
-                    If Err.Number <> 0 Then
-                         MsgBox "Avertissement: Ã‰criture rÃ©sultats Ã©chouÃ©e sur '" & ws.Name & "'.", vbExclamation: Err.Clear
+        
+        ' Si ce n'est PAS un code de congé, alors on calcule
+        If Not isLeaveCode And codeHoraire <> "" Then
+            heures = ExtraireHeures(codeHoraire)
+            
+            If IsArray(heures) Then
+                Dim j As Long, hDeb As Double, hFin As Double
+                For j = LBound(heures) To UBound(heures) - 1 Step 2
+                    hDeb = heures(j)
+                    hFin = heures(j + 1)
+                    If hFin <= hDeb Then hFin = hFin + 24
+                    
+                    ' --- *** NOUVELLE LOGIQUE: 2 HEURES MINIMUM POUR UN DEMI-POSTE *** ---
+                    Dim overlap As Double
+                    
+                    ' Matin (Fenêtre de calcul 7h-12h)
+                    overlap = Application.Max(0, Application.Min(hFin, 12) - Application.Max(hDeb, 7))
+                    If (hDeb <= 8 And hFin >= 12) Then ' Règle du poste complet reste prioritaire
+                        valMatin = 1
+                    ElseIf overlap >= 2 Then ' Il faut au moins 2h de présence dans la fenêtre pour 0.5
+                        valMatin = Application.Max(valMatin, 0.5)
                     End If
-                    On Error GoTo ErrorHandler
+                    
+                    ' Après-midi (Fenêtre de calcul 12h-17h)
+                    overlap = Application.Max(0, Application.Min(hFin, 17) - Application.Max(hDeb, 12))
+                    If (hDeb <= 13 And hFin >= 16.5) Then ' Règle du poste complet reste prioritaire
+                        valAM = 1
+                    ElseIf overlap >= 2 Then ' Il faut au moins 2h de présence dans la fenêtre pour 0.5
+                        valAM = Application.Max(valAM, 0.5)
+                    End If
+                    
+                    ' Soir (Fenêtre de calcul 17h-20.25h)
+                    overlap = Application.Max(0, Application.Min(hFin, 20.25) - Application.Max(hDeb, 17))
+                    If (hDeb < 17.5 And hFin >= 19) Then ' Règle du poste complet reste prioritaire
+                        valSoir = 1
+                    ElseIf overlap >= 2 Then ' Il faut au moins 2h de présence dans la fenêtre pour 0.5
+                        valSoir = Application.Max(valSoir, 0.5)
+                    End If
+                    
+                    ' Nuit
+                    If hDeb >= 20 Or hFin > 24 Then
+                        valNuit = 1
+                    End If
+                    
+                    ' Présences spécifiques basées sur les heures
+                    If hDeb = 6.75 Then valP0645 = 1
+                    If hDeb >= 6.75 And hDeb < 8 Then valP7H8H = 1
+                    If hDeb >= 8 And hDeb < 9 And hFin >= 16.5 Then valP8H1630 = 1
+                Next j
+            End If
 
-            End Select ' Fin Select Case nom feuille
-        End If ' End If ws.Visible
-    Next ws ' Prochaine feuille
+            ' LOGIQUE BASÉE SUR LES CODES SPÉCIFIQUES DE TRAVAIL
+            Select Case UCase(codeHoraire)
+                Case "C 15", "C 15 SA", "C 15 DI", "16:30 20:15", "8:30 12:45 16:30 20:15": valC15 = 1
+                Case "C 20", "8:30 12:30 16 20": valC20 = 1
+                Case "C 20 E": valC20E = 1
+                Case "C 19", "C 19 SA", "C 19 DI": valC19 = 1
+                Case "19:45 6:45": valN1945 = 1: valNuit = 1
+                Case "20 7": valN20H7 = 1: valNuit = 1
+                Case "20 24": valN20H7 = 0.5: valNuit = 1
+            End Select
+            
+            ' CORRECTIONS MANUELLES
+            If UCase(codeHoraire) = "13:30 17:30" Then valSoir = 0
+            If UCase(codeHoraire) = "8 18" Then valMatin = 1: valAM = 0.5: valSoir = 0.5
+            If UCase(codeHoraire) = "9 18" Then valMatin = 0.5: valAM = 1: valSoir = 0
+            If UCase(codeHoraire) = "6:45 20:30" Then valMatin = 1: valAM = 1: valSoir = 1
+            
+            ' Ré-appliquer les valeurs pour les codes "C"
+            Select Case UCase(codeHoraire)
+                Case "C 19", "C 19 SA", "C 19 DI", "C 20", "C 20 E", "C 15", "C 15 SA", "C 15 DI"
+                    valMatin = 1: valAM = 0: valSoir = 1
+            End Select
+            
+            ' Si c'est un poste de Nuit, on force la soirée à 0
+            If valNuit = 1 And (UCase(codeHoraire) = "19:45 6:45" Or UCase(codeHoraire) = "20 7" Or UCase(codeHoraire) = "20 24") Then
+                valSoir = 0
+            End If
+        End If
 
-CleanExit_Success:
-    Application.Calculation = xlCalculationAutomatic
+        results(i, 1) = valMatin: results(i, 2) = valAM: results(i, 3) = valSoir: results(i, 4) = valNuit
+        results(i, 5) = valP0645: results(i, 6) = valP7H8H: results(i, 7) = valP8H1630
+        results(i, 8) = valC15: results(i, 9) = valC20: results(i, 10) = valC20E: results(i, 11) = valC19
+        results(i, 12) = valN1945: results(i, 13) = valN20H7
+    Next i
+
+    ws.Range("C2:O" & lastRow).value = results
+    ColorationOptimisee ws, lastRow
+    AjouterLegendeHoraires ws
+
     Application.ScreenUpdating = True
-    MsgBox "Calculs (Hybride, Filtres Plages Stricts + L73) terminÃ©s !", vbInformation
-    Exit Sub
-
-CleanExit_Error:
     Application.Calculation = xlCalculationAutomatic
-    Application.ScreenUpdating = True
-    Exit Sub
-
-ErrorHandler:
-    MsgBox "Erreur VBA #" & Err.Number & ": " & Err.Description & vbCrLf & _
-           "ProcÃ©dure: CalculateAllShiftsAllSheetsOptimized_Combined_V8_Hybrid_StrictRanges_Final_V2", vbCritical
-    Resume CleanExit_Error
+    Application.EnableEvents = True
+    MsgBox "Auto-catégorisation complète terminée !", vbInformation
 End Sub
 
 
-' --- Fonction ReadRangeToArray (CORRIGÃ‰E) ---
-Function ReadRangeToArray(ws As Worksheet, rangeAddr As String) As Variant
-    Dim tempArray As Variant
-
-    On Error Resume Next ' GÃ©rer l'erreur si la plage n'existe pas ou autre problÃ¨me
-    tempArray = ws.Range(rangeAddr).value
-    If Err.Number <> 0 Then ' Si une erreur s'est produite lors de la lecture
-        ReadRangeToArray = Empty ' Retourner Empty
-        Err.Clear             ' Effacer l'erreur
-
-
-    ' Analyser le contenu de tempArray
-    If IsEmpty(tempArray) Then
-        ReadRangeToArray = Empty ' La plage est vide
-
-    ' --- ATTENTION A CETTE LIGNE : ElseIf sans espace ---
-    ElseIf Not IsArray(tempArray) Then ' La plage contient une seule valeur
-
-        ' Mettre cette valeur unique dans un tableau 1x1 pour la cohÃ©rence
-        Dim singleCellArray(1 To 1, 1 To 1) As Variant
-        singleCellArray(1, 1) = tempArray
-        ReadRangeToArray = singleCellArray
-    Else ' La plage contenait plusieurs cellules, tempArray est dÃ©jÃ  un tableau
-        ReadRangeToArray = tempArray
-    End If
-
+' =========================================================================================
+'   FONCTIONS ET PROCÉDURES UTILITAIRES (DÉPENDANCES - INCHANGÉES)
+' =========================================================================================
+Private Function ExtraireHeures(code As String) As Variant
+    On Error GoTo GestionErreur
+    Dim rawParts() As String, cleanParts() As String, part As Variant
+    Dim numCleanParts As Long, i As Long, result() As Double
+    code = Replace(code, "-", " "): code = Application.WorksheetFunction.Trim(code)
+    If code = "" Then GoTo GestionErreur
+    rawParts = Split(code, " ")
+    ReDim cleanParts(LBound(rawParts) To UBound(rawParts))
+    numCleanParts = 0
+    For Each part In rawParts
+        If part <> "" And IsNumeric(Left(part, 1)) Then
+            cleanParts(numCleanParts) = part
+            numCleanParts = numCleanParts + 1
+        End If
+    Next part
+    If numCleanParts = 0 Or numCleanParts Mod 2 <> 0 Then GoTo GestionErreur
+    ReDim Preserve cleanParts(0 To numCleanParts - 1)
+    ReDim result(1 To numCleanParts)
+    For i = LBound(cleanParts) To UBound(cleanParts)
+        result(i + 1) = ConvertTimeToDecimal(cleanParts(i))
+    Next i
+    ExtraireHeures = result
+    Exit Function
+GestionErreur:
+    ExtraireHeures = False
 End Function
 
+Private Function ConvertTimeToDecimal(timeString As String) As Double
+    Dim cleanString As String, timeParts() As String, i As Long
+    cleanString = ""
+    For i = 1 To Len(timeString)
+        Dim char As String: char = Mid(timeString, i, 1)
+        If IsNumeric(char) Or char = ":" Or char = "." Or char = "," Then
+            cleanString = cleanString & char
+        Else
+            Exit For
+        End If
+    Next i
+    cleanString = Replace(cleanString, ",", ".")
+    If InStr(cleanString, ":") > 0 Then
+        timeParts = Split(cleanString, ":")
+        ConvertTimeToDecimal = val(timeParts(0)) + (val(timeParts(1)) / 60)
+    Else
+        ConvertTimeToDecimal = val(cleanString)
+    End If
+End Function
 
+Sub ColorationOptimisee(ws As Worksheet, lastRow As Long)
+    Dim i As Long, col As Integer, val As Variant, cell As Range
+    Dim colors(1 To 4, 1 To 2) As Long
+    colors(1, 1) = RGB(255, 255, 153): colors(1, 2) = RGB(255, 255, 204)
+    colors(2, 1) = RGB(255, 204, 153): colors(2, 2) = RGB(255, 229, 204)
+    colors(3, 1) = RGB(153, 204, 255): colors(3, 2) = RGB(204, 229, 255)
+    colors(4, 1) = RGB(204, 153, 255): colors(4, 2) = RGB(229, 204, 255)
+    ws.Range("C2:F" & lastRow).Interior.ColorIndex = xlNone
+    For col = 3 To 6
+        For i = 2 To lastRow
+            Set cell = ws.Cells(i, col)
+            val = cell.value
+            If IsNumeric(val) And val > 0 Then
+                If val = 1 Then
+                    cell.Interior.Color = colors(col - 2, 1)
+                ElseIf val = 0.5 Then
+                    cell.Interior.Color = colors(col - 2, 2)
+                End If
+            End If
+        Next i
+    Next col
+End Sub
 
-
+Sub AjouterLegendeHoraires(ws As Worksheet)
+    ws.Range("H:I").Clear
+    ws.Range("R:T").Clear
+    ws.Range("R1").value = "Légende : Couleurs = présence sur le créneau"
+    Dim startCell As Range
+    Set startCell = ws.Range("S2")
+    startCell.value = "Légende des couleurs": startCell.Font.Bold = True
+    startCell.offset(1, 0).value = "Matin (Poste)": startCell.offset(1, 1).Interior.Color = RGB(255, 255, 153)
+    startCell.offset(2, 0).value = "Matin (Demi)": startCell.offset(2, 1).Interior.Color = RGB(255, 255, 204)
+    startCell.offset(3, 0).value = "Après-midi (Poste)": startCell.offset(3, 1).Interior.Color = RGB(255, 204, 153)
+    startCell.offset(4, 0).value = "Après-midi (Demi)": startCell.offset(4, 1).Interior.Color = RGB(255, 229, 204)
+    startCell.offset(5, 0).value = "Soir (Poste)": startCell.offset(5, 1).Interior.Color = RGB(153, 204, 255)
+    startCell.offset(6, 0).value = "Soir (Demi)": startCell.offset(6, 1).Interior.Color = RGB(204, 229, 255)
+    startCell.offset(7, 0).value = "Nuit": startCell.offset(7, 1).Interior.Color = RGB(204, 153, 255)
+    ws.Range("S:T").Columns.AutoFit
+End Sub

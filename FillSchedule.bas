@@ -9,7 +9,7 @@ Sub FillSchedule()
     Dim colIndex As Integer
     
     Set ws = ThisWorkbook.Sheets("Liste")
-    Set rng = ws.Range("A2:A" & ws.Cells(ws.rows.Count, "A").End(xlUp).row)
+    Set rng = ws.Range("A2:A" & ws.Cells(ws.Rows.Count, "A").End(xlUp).row)
 
     ' Define time ranges
     Set timeRanges = CreateObject("Scripting.Dictionary")
