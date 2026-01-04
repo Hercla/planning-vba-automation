@@ -1,10 +1,11 @@
+' ExportedAt: 2026-01-04 17:02:17 | Workbook: Planning_2026.xlsm
 VERSION 5.00
 Begin {C62A69F0-16DC-11CE-9E98-00AA00574A4F} UfPrintPlanM 
    Caption         =   "Imprimer planning"
    ClientHeight    =   1407
-   ClientLeft      =   -120
-   ClientTop       =   -405
-   ClientWidth     =   450
+   ClientLeft      =   -119
+   ClientTop       =   -399
+   ClientWidth     =   455
    OleObjectBlob   =   "UfPrintPlanM.frx":0000
    StartUpPosition =   1  'CenterOwner
 End

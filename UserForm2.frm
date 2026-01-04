@@ -1,10 +1,11 @@
+' ExportedAt: 2026-01-04 17:02:17 | Workbook: Planning_2026.xlsm
 VERSION 5.00
 Begin {C62A69F0-16DC-11CE-9E98-00AA00574A4F} UserForm2 
    Caption         =   "UserForm2"
    ClientHeight    =   1425
-   ClientLeft      =   45
+   ClientLeft      =   42
    ClientTop       =   210
-   ClientWidth     =   2160
+   ClientWidth     =   2163
    OleObjectBlob   =   "UserForm2.frx":0000
    StartUpPosition =   1  'CenterOwner
 End

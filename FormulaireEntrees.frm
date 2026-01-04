@@ -1,10 +1,11 @@
+' ExportedAt: 2026-01-04 17:02:15 | Workbook: Planning_2026.xlsm
 VERSION 5.00
 Begin {C62A69F0-16DC-11CE-9E98-00AA00574A4F} FormulaireEntrees 
    Caption         =   "Demande de Remplacement :"
    ClientHeight    =   2325
    ClientLeft      =   315
-   ClientTop       =   660
-   ClientWidth     =   6375
+   ClientTop       =   658
+   ClientWidth     =   6377
    OleObjectBlob   =   "FormulaireEntrees.frx":0000
 End
 Attribute VB_Name = "FormulaireEntrees"

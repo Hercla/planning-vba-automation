@@ -1,10 +1,11 @@
+' ExportedAt: 2026-01-04 17:02:15 | Workbook: Planning_2026.xlsm
 VERSION 5.00
 Begin {C62A69F0-16DC-11CE-9E98-00AA00574A4F} ManageLeavesForm 
    Caption         =   "UserForm3"
    ClientHeight    =   1890
-   ClientLeft      =   -90
+   ClientLeft      =   -91
    ClientTop       =   -420
-   ClientWidth     =   3330
+   ClientWidth     =   3332
    OleObjectBlob   =   "ManageLeavesForm.frx":0000
    StartUpPosition =   1  'CenterOwner
 End

@@ -1,3 +1,4 @@
+' ExportedAt: 2026-01-04 17:02:15 | Workbook: Planning_2026.xlsm
 Attribute VB_Name = "CalculFractionsPresence"
 Option Explicit
 

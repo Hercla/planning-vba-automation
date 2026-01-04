@@ -1,0 +1,4 @@
+' ExportedAt: 2026-01-04 17:02:17 | Workbook: Planning_2026.xlsm
+Export run proof
+Timestamp : 2026-01-04 17:02:15
+Workbook  : https://d.docs.live.net/AD31F9CD93996447/IC.1 Admin ^0 Team/1. Hot Topics/Horaire 2025/Planning_2026.xlsm

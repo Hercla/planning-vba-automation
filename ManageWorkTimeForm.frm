@@ -1,10 +1,11 @@
+' ExportedAt: 2026-01-04 17:02:16 | Workbook: Planning_2026.xlsm
 VERSION 5.00
 Begin {C62A69F0-16DC-11CE-9E98-00AA00574A4F} ManageWorkTimeForm 
    Caption         =   "UserForm3"
    ClientHeight    =   3437
    ClientLeft      =   0
    ClientTop       =   0
-   ClientWidth     =   4800
+   ClientWidth     =   4802
    OleObjectBlob   =   "ManageWorkTimeForm.frx":0000
    StartUpPosition =   1  'CenterOwner
 End

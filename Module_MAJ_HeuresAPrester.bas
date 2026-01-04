@@ -1,3 +1,4 @@
+' ExportedAt: 2026-01-04 17:02:16 | Workbook: Planning_2026.xlsm
 Attribute VB_Name = "Module_MAJ_HeuresAPrester"
 Option Explicit
 
@@ -164,7 +165,7 @@ Private Function HeuresAPresterDyn(ByVal nomMois As String, ByVal pct As Double,
     Dim i As Long, moisNum As Long, nbJoursMois As Long
     
     On Error Resume Next
-    moisNum = Month(dateValue("1 " & nomMois & " " & annee))
+    moisNum = Month(DateValue("1 " & nomMois & " " & annee))
     If Err.Number <> 0 Then HeuresAPresterDyn = 0: Exit Function
     On Error GoTo 0
     

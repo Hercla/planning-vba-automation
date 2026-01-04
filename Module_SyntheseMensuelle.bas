@@ -1,3 +1,4 @@
+' ExportedAt: 2026-01-04 17:02:17 | Workbook: Planning_2026.xlsm
 Attribute VB_Name = "Module_SyntheseMensuelle"
 Option Explicit
 

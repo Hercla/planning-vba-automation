@@ -1,10 +1,11 @@
+' ExportedAt: 2026-01-04 17:02:17 | Workbook: Planning_2026.xlsm
 VERSION 5.00
 Begin {C62A69F0-16DC-11CE-9E98-00AA00574A4F} UfRazM 
    Caption         =   "Effacement du planning mensuel "
    ClientHeight    =   6960
-   ClientLeft      =   -60
-   ClientTop       =   -180
-   ClientWidth     =   6990
+   ClientLeft      =   -63
+   ClientTop       =   -182
+   ClientWidth     =   6993
    OleObjectBlob   =   "UfRazM.frx":0000
    StartUpPosition =   1  'CenterOwner
 End

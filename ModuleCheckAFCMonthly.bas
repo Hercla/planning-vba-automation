@@ -1,10 +1,13 @@
+' ExportedAt: 2026-01-04 17:02:16 | Workbook: Planning_2026.xlsm
 Attribute VB_Name = "ModuleCheckAFCMonthly"
 Option Explicit
-' Vérifie que certains employés ont le nombre requis de codes "AFC"
+
+' Vérifie que certains employés ont le nombre requis de codes "DP"
 ' dans la feuille de planning actuellement ouverte.
-Sub CheckAFCMonthlyCodes()
+Sub CheckDPMonthlyCodes()
     On Error GoTo ErrorHandler
 
+    ' Optimisation de l'affichage pour la vitesse
     Application.EnableEvents = False
     Application.ScreenUpdating = False
     Application.Calculation = xlCalculationManual
@@ -14,22 +17,19 @@ Sub CheckAFCMonthlyCodes()
     Dim shiftType As String
     Dim startRow As Long, lastRow As Long
     Dim startCol As Long, endCol As Long
-    Dim row As Long, col As Long
-    Dim employeeName As String, countAFC As Long
+    Dim row As Long
+    Dim employeeName As String, countDP As Long
     Dim configCol As Long
     Dim expectedCounts As Object
     Dim report As String
+    Dim rngSearch As Range
 
     Set ws = ActiveSheet
     
-    ' Tente de trouver la feuille de configuration avec le nom correct
+    ' --- Chargement de la configuration ---
     On Error Resume Next
-    ' ===================================================================
-    ' ----- LIGNE CORRIGÉE -----
-    ' ===================================================================
     Set wsConfig = ThisWorkbook.Sheets("Configuration_CTR_CheckWeek")
-    ' ===================================================================
-    On Error GoTo ErrorHandler ' Réactive le gestionnaire d'erreurs principal
+    On Error GoTo ErrorHandler
     
     If wsConfig Is Nothing Then
         MsgBox "La feuille 'Configuration_CTR_CheckWeek' est introuvable.", vbCritical, "Erreur de configuration"
@@ -43,12 +43,14 @@ Sub CheckAFCMonthlyCodes()
 
     shiftType = ""
 
+    ' Vérification basée sur les lignes masquées
     If ws.Rows(startRowJour).Hidden = False Then
         shiftType = "jour"
     ElseIf ws.Rows(startRowNuit).Hidden = False Then
         shiftType = "nuit"
     End If
     
+    ' Fallback sur le nom de l'onglet si les lignes ne suffisent pas
     If shiftType = "" Then
         If InStr(1, ws.Name, "nuit", vbTextCompare) > 0 Then
             shiftType = "nuit"
@@ -58,21 +60,19 @@ Sub CheckAFCMonthlyCodes()
     End If
 
     If shiftType = "" Then
-        MsgBox "Impossible de déterminer si le planning est de type Jour ou Nuit." & vbNewLine & vbNewLine & _
-               "Vérifiez que les lignes des employés (jour/nuit) sont correctement affichées/masquées " & _
-               "OU que le nom de l'onglet contient 'jour' ou 'nuit'.", _
-               vbExclamation, "Vérification AFC"
+        MsgBox "Impossible de déterminer si le planning est de type Jour ou Nuit." & vbNewLine & _
+               "Vérifiez l'affichage des lignes ou le nom de l'onglet.", vbExclamation, "Vérification DP"
         GoTo Cleanup
     End If
 
-    ' --- Configuration des variables ---
+    ' --- Configuration des limites de lecture ---
     If shiftType = "jour" Then configCol = 2 Else configCol = 3
     startRow = wsConfig.Cells(2, configCol).value
     lastRow = wsConfig.Cells(3, configCol).value
     startCol = wsConfig.Cells(5, configCol).value
     endCol = wsConfig.Cells(6, configCol).value
 
-    ' --- Chargement des employés et des comptes attendus ---
+    ' --- Chargement du dictionnaire (Employés et Quotas DP) ---
     Set expectedCounts = CreateObject("Scripting.Dictionary")
     
     Dim lastConfigRow As Long
@@ -96,49 +96,50 @@ Sub CheckAFCMonthlyCodes()
     Next i
     
     If expectedCounts.Count = 0 Then
-        MsgBox "Aucun employé à vérifier n'a été trouvé dans la configuration pour l'équipe de " & shiftType & ".", vbInformation, "Vérification AFC"
+        MsgBox "Aucun employé à vérifier n'a été trouvé dans la config pour l'équipe de " & shiftType & ".", vbInformation, "Vérification DP"
         GoTo Cleanup
     End If
 
-    ' --- Vérification des codes AFC sur la feuille de planning ---
+    ' --- Vérification des codes DP sur le planning (Optimisée) ---
     report = ""
+    
     For row = startRow To lastRow
+        ' Vérifie si la cellule nom n'est pas vide
         If Not IsEmpty(ws.Cells(row, 1).value) Then
             employeeName = LCase(Trim(CStr(ws.Cells(row, 1).value)))
             
             If expectedCounts.Exists(employeeName) Then
-                countAFC = 0
-                For col = startCol To endCol
-                    If UCase(Trim(CStr(ws.Cells(row, col).value))) = "AFC" Then
-                        countAFC = countAFC + 1
-                    End If
-                Next col
                 
-                If countAFC <> expectedCounts(employeeName) Then
-                    report = report & ws.Cells(row, 1).value & " : " & countAFC & _
-                             " AFC (attendu " & expectedCounts(employeeName) & ")" & vbNewLine
+                ' OPTIMISATION : Utilisation de CountIf au lieu de boucler sur chaque cellule
+                Set rngSearch = ws.Range(ws.Cells(row, startCol), ws.Cells(row, endCol))
+                countDP = Application.WorksheetFunction.CountIf(rngSearch, "DP")
+                
+                If countDP <> expectedCounts(employeeName) Then
+                    report = report & ws.Cells(row, 1).value & " : " & countDP & _
+                             " DP (attendu " & expectedCounts(employeeName) & ")" & vbNewLine
                 End If
+                
             End If
         End If
     Next row
 
     ' --- Affichage du rapport final ---
     If report <> "" Then
-        MsgBox "Vérification AFC - écarts détectés pour l'équipe de " & shiftType & ":" & vbNewLine & vbNewLine & report, vbExclamation, "Rapport AFC"
+        MsgBox "Vérification DP - écarts détectés (" & shiftType & ") :" & vbNewLine & vbNewLine & report, vbExclamation, "Rapport DP"
     Else
-        MsgBox "Tous les employés ciblés de l'équipe de " & shiftType & " possèdent le nombre requis de codes AFC.", _
-               vbInformation, "Vérification AFC"
+        MsgBox "Tous les employés ciblés (" & shiftType & ") possèdent le nombre requis de codes DP.", vbInformation, "Vérification DP"
     End If
     
-    GoTo Cleanup ' Sortie normale
+    GoTo Cleanup
 
 ErrorHandler:
-    MsgBox "Erreur inattendue: " & Err.Description & " (Code: " & Err.Number & ")", vbCritical, "Erreur d'exécution"
+    MsgBox "Erreur inattendue : " & Err.Description & " (Code: " & Err.Number & ")", vbCritical, "Erreur"
 
 Cleanup:
     Set ws = Nothing
     Set wsConfig = Nothing
     Set expectedCounts = Nothing
+    Set rngSearch = Nothing
     Application.EnableEvents = True
     Application.ScreenUpdating = True
     Application.Calculation = xlCalculationAutomatic

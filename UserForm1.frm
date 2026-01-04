@@ -1,10 +1,11 @@
+' ExportedAt: 2026-01-04 17:02:17 | Workbook: Planning_2026.xlsm
 VERSION 5.00
 Begin {C62A69F0-16DC-11CE-9E98-00AA00574A4F} UserForm1 
    Caption         =   "PLANNING TEAM US 1D"
    ClientHeight    =   10185
    ClientLeft      =   -1155
    ClientTop       =   -5880
-   ClientWidth     =   3705
+   ClientWidth     =   3703
    OleObjectBlob   =   "UserForm1.frx":0000
    ShowModal       =   0   'False
 End
@@ -286,13 +287,17 @@ Call CTR_CheckWeekendEligibility
 End Sub
 
 Private Sub CommandButton129_Click()
-Call CheckAFCMonthlyCodes
+Call CheckDPMonthlyCodes
 
 End Sub
 
 Private Sub CommandButton130_Click()
 Call UpdateMonthlySheets_Final_Polished
 
+End Sub
+
+Private Sub CommandButton131_Click()
+Call Check_Presence_Infirmiers
 End Sub
 
 Private Sub CommandButton28_Click()
@@ -628,8 +633,7 @@ End Sub
 
 Private Sub CommandButton93_Click()
     ' Appelle la macro publique qui se trouve dans Module_Planning
-    Call UpdateDailyTotals
-    
+    Call UpdateDailyTotals_V2
 End Sub
 
 

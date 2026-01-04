@@ -1,9 +1,10 @@
+' ExportedAt: 2026-01-04 17:02:17 | Workbook: Planning_2026.xlsm
 VERSION 5.00
 Begin {C62A69F0-16DC-11CE-9E98-00AA00574A4F} UserForm4 
    Caption         =   "Note de Remplacement"
    ClientHeight    =   1980
-   ClientLeft      =   -180
-   ClientTop       =   -960
+   ClientLeft      =   -182
+   ClientTop       =   -959
    ClientWidth     =   5040
    OleObjectBlob   =   "UserForm4.frx":0000
    StartUpPosition =   1  'CenterOwner
