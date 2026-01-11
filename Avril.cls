@@ -1,32 +1,35 @@
-' ExportedAt: 2026-01-04 17:02:15 | Workbook: Planning_2026.xlsm
-VERSION 1.0 CLASS
-BEGIN
-  MultiUse = -1  'True
-END
-Attribute VB_Name = "Avril"
-Attribute VB_GlobalNameSpace = False
-Attribute VB_Creatable = False
-Attribute VB_PredeclaredId = True
-Attribute VB_Exposed = True
-Private Sub Worksheet0_Change(ByVal target As Range)
-    ' Spécifie le contenu spécifique et la largeur souhaitée
-    Dim specificCode As String
-    Dim specificWidth As Double
-
-    specificCode = "8:30 12:45 16:30 20:15"
-    specificWidth = 4.9
-
-    ' Vérifie si le changement concerne une seule cellule
-    If target.Cells.Count = 1 Then
-        ' Vérifie si la cellule contient le code spécifique
-        If target.value = specificCode Then
-            ' Ajuste la largeur de la colonne à 4.90
-            target.EntireColumn.ColumnWidth = specificWidth
-        End If
-    End If
-End Sub
-Private Sub CommandButton120_Click()
-    UserForm3.Show
-End Sub
-Option Explicit
-
+' ExportedAt: 2026-01-11 14:14:03 | Workbook: Planning_2026.xlsm
+VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "Avril"
+Attribute VB_Base = "0{00020820-0000-0000-C000-000000000046}"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = True
+Attribute VB_Exposed = True
+Attribute VB_TemplateDerived = False
+Attribute VB_Customizable = True
+Private Sub Worksheet0_Change(ByVal target As Range)
+    ' Spécifie le contenu spécifique et la largeur souhaitée
+    Dim specificCode As String
+    Dim specificWidth As Double
+
+    specificCode = "8:30 12:45 16:30 20:15"
+    specificWidth = 4.9
+
+    ' Vérifie si le changement concerne une seule cellule
+    If target.Cells.Count = 1 Then
+        ' Vérifie si la cellule contient le code spécifique
+        If target.value = specificCode Then
+            ' Ajuste la largeur de la colonne à 4.90
+            target.EntireColumn.ColumnWidth = specificWidth
+        End If
+    End If
+End Sub
+Private Sub CommandButton120_Click()
+    UserForm3.Show
+End Sub
+Option Explicit
+

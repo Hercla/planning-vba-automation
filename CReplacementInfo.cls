@@ -1,18 +1,21 @@
-' ExportedAt: 2026-01-04 17:02:15 | Workbook: Planning_2026.xlsm
-VERSION 1.0 CLASS
-BEGIN
-  MultiUse = -1  'True
-END
-Attribute VB_Name = "CReplacementInfo"
-Attribute VB_GlobalNameSpace = False
-Attribute VB_Creatable = False
-Attribute VB_PredeclaredId = False
-Attribute VB_Exposed = True
-'== Module de classe (Class Module) nommé ReplacementInfo ==
-Public sourceLineNum As Long
-Public shiftCode As String
-Public IsNurse As Boolean
-Public IsASBD As Boolean
-Public DemandDate As Date
-Public IsWeekend As Boolean
-Public IsHoliday As Boolean
+' ExportedAt: 2026-01-11 14:14:03 | Workbook: Planning_2026.xlsm
+VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "CReplacementInfo"
+Attribute VB_Base = "0{FCFB3D2A-A0FA-1068-A738-08002B3371B5}"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = False
+Attribute VB_Exposed = True
+Attribute VB_TemplateDerived = False
+Attribute VB_Customizable = False
+'== Module de classe (Class Module) nommé ReplacementInfo ==
+Public sourceLineNum As Long
+Public shiftCode As String
+Public IsNurse As Boolean
+Public IsASBD As Boolean
+Public DemandDate As Date
+Public IsWeekend As Boolean
+Public IsHoliday As Boolean

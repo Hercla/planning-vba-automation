@@ -1,9 +1,5 @@
 ' ExportedAt: 2026-01-11 14:14:03 | Workbook: Planning_2026.xlsm
-VERSION 1.0 CLASS
-BEGIN
-  MultiUse = -1  'True
-END
-Attribute VB_Name = "Feuil10"
+Attribute VB_Name = "Feuil8"
 Attribute VB_Base = "0{00020820-0000-0000-C000-000000000046}"
 Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
